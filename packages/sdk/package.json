@@ -1,0 +1,27 @@
+{
+  "name": "@echo-feedback/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "回声：框架无关的匿名反馈面板",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/echo-feedback.iife.js",
+  "module": "./dist/echo-feedback.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/echo-feedback.js"
+    },
+    "./iife": "./dist/echo-feedback.iife.js"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json"
+  },
+  "devDependencies": {
+    "@echo-feedback/contracts": "workspace:*",
+    "vite": "8.3.0"
+  }
+}

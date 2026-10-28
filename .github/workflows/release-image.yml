@@ -1,0 +1,141 @@
+# 仅同仓库 PR 合入 main 自动发布；直接 push 不发布。
+name: Release image
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_sha:
+        description: 回滚到已发布镜像的完整 40 位 SHA（仅 main）
+        required: true
+        type: string
+concurrency:
+  group: echo-production-release
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  build:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: 校验合并提交
+        env:
+          RELEASE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: '[[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm verify
+      - name: 校验部署脚本语法
+        run: bash -n scripts/deploySsh.sh scripts/deployRemote.sh
+      - uses: docker/setup-buildx-action@v3
+      - name: 构建待验收镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          platforms: linux/amd64
+          provenance: false
+          tags: echo-feedback:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max,ignore-error=true
+      - name: 容器启动、附件和备份恢复验收
+        run: node tests/deploy/docker-smoke.mjs
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 发布已验收的同一镜像
+        env:
+          RELEASE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:sha-${RELEASE_SHA}"
+          docker tag echo-feedback:local "$image"
+          docker push "$image"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-verification
+          path: |
+            .tmp/verification-results
+            .tmp/playwright
+          include-hidden-files: true
+  deploy:
+    needs: build
+    permissions:
+      contents: read
+      packages: read
+    if: >-
+      always() && !cancelled() &&
+      ((github.event.pull_request.merged == true && needs.build.result == 'success') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && needs.build.result == 'skipped'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 校验部署目标
+        id: target
+        env:
+          RELEASE_SHA: ${{ github.event.pull_request.merge_commit_sha || inputs.image_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          # 连续合入时旧任务只发镜像，不覆盖更新的 main。
+          if [[ "$GITHUB_EVENT_NAME" != workflow_dispatch ]]; then
+            current="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+            if [[ "$current" != "$RELEASE_SHA" ]]; then
+              echo "跳过部署：main 已有更新提交。" >> "$GITHUB_STEP_SUMMARY"
+              echo "deploy=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$RELEASE_SHA" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: steps.target.outputs.deploy == 'true'
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          fetch-depth: 0
+      - name: 提取目标版本部署文件
+        if: steps.target.outputs.deploy == 'true'
+        env:
+          RELEASE_SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$RELEASE_SHA" HEAD
+          mkdir -p .tmp/release
+          git show "$RELEASE_SHA:deploy/compose.yml" > .tmp/release/compose.yml
+      - name: SSH 备份并部署到 DC6
+        if: steps.target.outputs.deploy == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          COMPOSE_PROJECT_NAME: ${{ secrets.COMPOSE_PROJECT_NAME }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ steps.target.outputs.sha }}
+        run: bash scripts/deploySsh.sh
+      - name: 检查 Nginx 公网反代
+        if: steps.target.outputs.deploy == 'true'
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-delay 3 --max-time 15 https://echo.fuego.site/api/health/ready
+          echo "部署完成：https://echo.fuego.site" >> "$GITHUB_STEP_SUMMARY"

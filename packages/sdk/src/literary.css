@@ -1,0 +1,83 @@
+/* B 青瓷竹简、C 墨夜鎏金：只添加视觉层，不改变共用表单行为。 */
+:host([data-ui-style="celadon"]) {
+  --ef-bg: #faf7ef;
+  --ef-text: #263e35;
+  --ef-muted: #53685b;
+  --ef-line: #7b8a76;
+  --ef-soft: #eef2e8;
+  --ef-dark-bg: #202d27;
+  --ef-dark-text: #e8eee3;
+  --ef-dark-muted: #b6c6b7;
+  --ef-dark-line: #859983;
+  --ef-dark-soft: #2b3b32;
+}
+:host([data-ui-style="gilded"]) {
+  --ef-bg: #f6efdf;
+  --ef-text: #303a33;
+  --ef-muted: #675e49;
+  --ef-line: #8c795c;
+  --ef-soft: #eee4d0;
+  --ef-dark-bg: #242925;
+  --ef-dark-text: #e8ddc4;
+  --ef-dark-muted: #c3b698;
+  --ef-dark-line: #9a8965;
+  --ef-dark-soft: #303a33;
+}
+:host([data-ui-style="celadon"][data-theme="dark"]),
+:host([data-ui-style="gilded"][data-theme="dark"]) {
+  --ef-bg: var(--ef-dark-bg);
+  --ef-text: var(--ef-dark-text);
+  --ef-muted: var(--ef-dark-muted);
+  --ef-line: var(--ef-dark-line);
+  --ef-soft: var(--ef-dark-soft);
+}
+@media (prefers-color-scheme: dark) {
+  :host([data-ui-style="celadon"][data-theme="system"]),
+  :host([data-ui-style="gilded"][data-theme="system"]) {
+    --ef-bg: var(--ef-dark-bg);
+    --ef-text: var(--ef-dark-text);
+    --ef-muted: var(--ef-dark-muted);
+    --ef-line: var(--ef-dark-line);
+    --ef-soft: var(--ef-dark-soft);
+  }
+}
+:host([data-ui-style="celadon"]) header {
+  border-top-width: 2px;
+  background: linear-gradient(120deg, var(--ef-soft), var(--ef-bg) 75%);
+}
+:host([data-ui-style="celadon"]) .eyebrow::before {
+  background: transparent;
+  color: var(--ef-accent-text);
+  border: 1px solid currentColor;
+  border-radius: 2px 8px;
+}
+:host([data-ui-style="celadon"]) header::after {
+  content: "";
+  position: absolute;
+  width: 28px;
+  height: 8px;
+  right: 80px;
+  top: 28px;
+  border-radius: 100% 0;
+  background: var(--ef-accent-text);
+  box-shadow: -12px 9px 0 currentColor;
+  color: var(--ef-accent-text);
+  transform: rotate(-30deg);
+  opacity: 0.15;
+  pointer-events: none;
+}
+:host([data-ui-style="gilded"]) header {
+  border-top: 5px double var(--ef-accent);
+}
+:host([data-ui-style="gilded"]) .eyebrow::before {
+  background: transparent;
+  color: var(--ef-accent-text);
+  border-color: currentColor;
+  border-radius: 0;
+}
+:host([data-ui-style="gilded"]) .trigger {
+  border: 3px double var(--ef-line);
+}
+:host([data-ui-style="gilded"]) .success-icon {
+  border-radius: 50% 50% 4px 4px;
+}

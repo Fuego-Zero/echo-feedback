@@ -1,0 +1,235 @@
+/* 科幻皮肤仅覆盖视觉：装饰不接收事件，也不裁切输入区或键盘焦点。 */
+:host([data-ui-style="cyber"]) {
+  --ef-bg: #f4f6ed;
+  --ef-soft: #e7ebe3;
+  --ef-text: #182226;
+  --ef-muted: #505e61;
+  --ef-line: #78877e;
+  --ef-dark-bg: #101114;
+  --ef-dark-soft: #1c2329;
+  --ef-dark-text: #e8eff0;
+  --ef-dark-muted: #a8bbc0;
+  --ef-dark-line: #74888d;
+  --ef-signal: #36e7e0;
+}
+:host([data-ui-style="freedom"]) {
+  --ef-bg: #f5f7fa;
+  --ef-soft: #ffffff;
+  --ef-text: #172536;
+  --ef-muted: #536780;
+  --ef-line: #7c8da5;
+  --ef-dark-bg: #141e30;
+  --ef-dark-soft: #202e45;
+  --ef-dark-text: #edf2fa;
+  --ef-dark-muted: #b4c3da;
+  --ef-dark-line: #8294b2;
+  --ef-signal: #d83a40;
+}
+:host([data-ui-style="justice"]) {
+  --ef-bg: #f7f4f5;
+  --ef-soft: #ffffff;
+  --ef-text: #2d2833;
+  --ef-muted: #705b68;
+  --ef-line: #7c8da5;
+  --ef-dark-bg: #231d27;
+  --ef-dark-soft: #332a38;
+  --ef-dark-text: #f5edf2;
+  --ef-dark-muted: #cbb8c5;
+  --ef-dark-line: #a18b9d;
+  --ef-signal: #c8d95c;
+}
+:host([data-ui-family="futuristic"][data-theme="dark"]) {
+  --ef-bg: var(--ef-dark-bg);
+  --ef-soft: var(--ef-dark-soft);
+  --ef-text: var(--ef-dark-text);
+  --ef-muted: var(--ef-dark-muted);
+  --ef-line: var(--ef-dark-line);
+}
+@media (prefers-color-scheme: dark) {
+  :host([data-ui-family="futuristic"][data-theme="system"]) {
+    --ef-bg: var(--ef-dark-bg);
+    --ef-soft: var(--ef-dark-soft);
+    --ef-text: var(--ef-dark-text);
+    --ef-muted: var(--ef-dark-muted);
+    --ef-line: var(--ef-dark-line);
+  }
+}
+:host([data-ui-family="futuristic"]) dialog {
+  border-radius: 4px;
+  box-shadow: 0 24px 80px #10182750;
+}
+:host([data-ui-family="futuristic"]) dialog::backdrop {
+  background: #10182780;
+}
+:host([data-ui-family="futuristic"]) h2 {
+  font-family: inherit;
+  letter-spacing: 0;
+  font-weight: 750;
+}
+:host([data-ui-family="futuristic"]) .eyebrow::before {
+  content: none;
+}
+:host([data-ui-family="futuristic"]) .eyebrow {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 5px 10px;
+  margin-bottom: 12px;
+  letter-spacing: 1.4px;
+}
+:host([data-ui-family="futuristic"]) .submit,
+:host([data-ui-family="futuristic"]) .trigger {
+  border-radius: 3px;
+  font-weight: 750;
+  letter-spacing: 0.5px;
+}
+:host([data-ui-family="futuristic"]) .trigger {
+  background: var(--ef-accent);
+  color: var(--ef-on-accent);
+  border-color: var(--ef-line);
+}
+:host([data-ui-family="futuristic"]) .success-icon {
+  border: 2px solid var(--ef-accent-text);
+  border-radius: 50%;
+}
+:host([data-ui-family="futuristic"]) label,
+:host([data-ui-family="futuristic"]) .field-title {
+  border-left: 3px solid var(--ef-accent-text);
+  padding-left: 8px;
+}
+:host([data-ui-family="futuristic"]) header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 76px;
+  width: 48px;
+  height: 5px;
+  background: repeating-linear-gradient(125deg, var(--ef-signal) 0 8px, transparent 8px 12px);
+  pointer-events: none;
+}
+:host([data-ui-style="cyber"]) header {
+  border-top: 4px solid var(--ef-accent);
+}
+:host([data-ui-style="cyber"]) .eyebrow {
+  background: var(--ef-accent);
+  color: var(--ef-on-accent);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+}
+:host([data-ui-style="cyber"]) footer {
+  border-top: 1px solid var(--ef-line);
+  box-shadow: inset 3px 0 var(--ef-signal);
+}
+:host([data-ui-style="cyber"]) .submit {
+  border-right: 4px solid var(--ef-signal);
+}
+:host([data-ui-style="freedom"]) header {
+  border-top: 4px solid var(--ef-accent);
+  background: linear-gradient(130deg, var(--ef-soft), var(--ef-bg) 75%);
+}
+:host([data-ui-style="freedom"]) .eyebrow {
+  background: var(--ef-accent);
+  color: var(--ef-on-accent);
+  padding-right: 22px;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+:host([data-ui-style="freedom"]) footer {
+  border-top: 1px solid var(--ef-line);
+  background: linear-gradient(#f2c94c, #f2c94c) left top / 4px 28px no-repeat;
+}
+:host([data-ui-style="freedom"]) .success-icon {
+  border-radius: 4px 16px;
+  border-right-color: var(--ef-signal);
+}
+/* 宽肩装甲与中轴细节区分自由之翼，装饰不遮挡表单。 */
+:host([data-ui-style="justice"]) dialog::before,
+:host([data-ui-style="justice"]) dialog::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    165deg,
+    var(--ef-accent) 0 22%,
+    #2d2833 22% 28%,
+    #cf6078 28% 42%,
+    #727c4d 42% 46%,
+    var(--ef-accent) 46% 73%,
+    #2d2833 73% 81%,
+    #cf6078 81%
+  );
+}
+:host([data-ui-style="justice"]) dialog::before {
+  left: 0;
+  clip-path: polygon(
+    0 0,
+    100% 8px,
+    100% 28%,
+    35% 30%,
+    100% 33%,
+    100% 75%,
+    35% 77%,
+    100% 80%,
+    100% calc(100% - 9px),
+    0 100%
+  );
+}
+:host([data-ui-style="justice"]) dialog::after {
+  right: 0;
+  transform: scaleX(-1);
+  clip-path: polygon(
+    0 0,
+    100% 8px,
+    100% 28%,
+    35% 30%,
+    100% 33%,
+    100% 75%,
+    35% 77%,
+    100% 80%,
+    100% calc(100% - 9px),
+    0 100%
+  );
+}
+:host([data-ui-style="justice"]) header {
+  border-top: 8px solid var(--ef-accent);
+  border-bottom: 1px solid var(--ef-line);
+  background:
+    linear-gradient(135deg, #cf6078 0 14px, transparent 14px) top left / 40px 40px no-repeat,
+    linear-gradient(225deg, #cf6078 0 14px, transparent 14px) top right / 40px 40px no-repeat;
+}
+:host([data-ui-style="justice"]) header::after {
+  top: -8px;
+  left: calc(50% - 24px);
+  right: auto;
+  height: 8px;
+  background: repeating-linear-gradient(110deg, #c8d95c 0 5px, #727c4d 5px 9px);
+}
+:host([data-ui-style="justice"]) .eyebrow {
+  width: 100%;
+  background: var(--ef-accent);
+  color: var(--ef-on-accent);
+  padding: 6px 24px;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+}
+:host([data-ui-style="justice"]) footer {
+  border-top: 1px solid var(--ef-line);
+  background:
+    linear-gradient(90deg, transparent 20%, #cf6078 20% 44%, #727c4d 44% 56%, #cf6078 56% 80%, transparent 80%) top /
+      100% 4px no-repeat,
+    var(--ef-bg);
+}
+:host([data-ui-style="justice"]) .submit {
+  border-left: 4px solid #cf6078;
+  border-right: 4px solid #cf6078;
+}
+:host([data-ui-style="justice"]) .success-icon {
+  border-radius: 6px;
+  border-bottom: 4px solid #727c4d;
+}
+@media (max-width: 600px) {
+  :host([data-ui-family="futuristic"]) dialog {
+    border-radius: 0;
+  }
+}
