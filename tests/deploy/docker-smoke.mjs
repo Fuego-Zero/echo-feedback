@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 
@@ -118,7 +118,22 @@ try {
     "scripts/backup.ts",
     "/data/snapshot"
   );
-  await cp(join(directory, "data", "snapshot"), join(directory, "restored"), { recursive: true });
+  await mkdir(join(directory, "restored"));
+  // 备份目录仅容器用户可读；在隔离挂载内复制，避免依赖 Runner 的 UID。
+  await execute("docker", [
+    "run",
+    "--rm",
+    "--user",
+    "0",
+    "--mount",
+    `type=bind,source=${directory},target=/acceptance`,
+    "--entrypoint",
+    "cp",
+    "echo-feedback:local",
+    "-a",
+    "/acceptance/data/snapshot/.",
+    "/acceptance/restored",
+  ]);
   const original = await readFile(composePath, "utf8");
   await writeFile(composePath, original.replace("./data:/data", "./restored:/data"));
   if (process.platform !== "win32") {
