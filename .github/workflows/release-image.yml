@@ -77,6 +77,9 @@ jobs:
           include-hidden-files: true
   deploy:
     needs: build
+    permissions:
+      contents: read
+      packages: read
     if: >-
       always() && !cancelled() &&
       ((github.event.pull_request.merged == true && needs.build.result == 'success') ||
@@ -127,8 +130,8 @@ jobs:
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           COMPOSE_PROJECT_NAME: ${{ secrets.COMPOSE_PROJECT_NAME }}
-          GHCR_USER: ${{ secrets.GHCR_USER }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
           RELEASE_SHA: ${{ steps.target.outputs.sha }}
         run: bash scripts/deploySsh.sh
       - name: 检查 Nginx 公网反代

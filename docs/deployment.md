@@ -72,10 +72,8 @@ docker compose up -d --wait --wait-timeout 90
 | SSH_KNOWN_HOSTS      | 经可信渠道核对的主机公钥记录，不在工作流中临时信任扫描结果 |
 | DEPLOY_PATH          | `/data/echo-feedback`；脚本要求目录名为 echo-feedback      |
 | COMPOSE_PROJECT_NAME | `echo-feedback`                                            |
-| GHCR_USER            | 可读取镜像的 GitHub 用户                                   |
-| GHCR_TOKEN           | 只读 read:packages 凭据，用于 DC6 拉取私有镜像             |
 
-Actions 构建推送使用内置 GITHUB_TOKEN 的 packages:write 权限，不使用服务器拉取凭据。需允许仓库 Actions 运行，并确认包权限允许该仓库写入。
+Actions 构建推送使用内置 GITHUB_TOKEN 的 packages:write 权限；部署任务使用独立的 packages:read 短期 GITHUB_TOKEN，通过标准输入在 DC6 一次性 Docker 配置目录登录，任务结束清除。无需另配长期 GHCR_TOKEN 或 GHCR_USER Secret。需允许仓库 Actions 运行，并确认包权限允许该仓库写入。
 
 ### 首次准备
 
