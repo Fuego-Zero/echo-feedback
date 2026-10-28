@@ -1,7 +1,7 @@
 # 替换域名、证书路径。若 Nginx 前面还有代理，只在可信代理上恢复真实 IP。
 server {
     listen 443 ssl;
-    server_name feedback.example.com;
+    server_name echo.fuego.site;
     ssl_certificate /etc/nginx/certs/feedback/fullchain.pem;
     ssl_certificate_key /etc/nginx/certs/feedback/privkey.pem;
     client_max_body_size 16m;
@@ -24,6 +24,6 @@ server {
 }
 server {
     listen 80;
-    server_name feedback.example.com;
+    server_name echo.fuego.site;
     return 301 https://$host$request_uri;
 }
