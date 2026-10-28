@@ -1,0 +1,29 @@
+# 替换域名、证书路径。若 Nginx 前面还有代理，只在可信代理上恢复真实 IP。
+server {
+    listen 443 ssl;
+    server_name feedback.example.com;
+    ssl_certificate /etc/nginx/certs/feedback/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/feedback/privkey.pem;
+    client_max_body_size 16m;
+    client_body_timeout 60s;
+    # 不记录 URL 中的公开 AK、查询参数或用户来源信息。
+    access_log off;
+    location / {
+        proxy_pass http://127.0.0.1:8730;
+        proxy_http_version 1.1;
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 65s;
+        proxy_read_timeout 65s;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Connection "";
+    }
+}
+server {
+    listen 80;
+    server_name feedback.example.com;
+    return 301 https://$host$request_uri;
+}

@@ -1,0 +1,23 @@
+services:
+  echo:
+    image: ${ECHO_IMAGE:?Set ECHO_IMAGE to an immutable SHA image}
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      WEB_BIND_HOST: 0.0.0.0
+      WEB_PORT: "8730"
+      API_PORT: "8731"
+      DATA_DIR: /data
+    ports:
+      - "127.0.0.1:${ECHO_HOST_PORT:-8730}:8730"
+    volumes:
+      - ./data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    stop_grace_period: 30s
