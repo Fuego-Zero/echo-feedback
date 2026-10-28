@@ -58,7 +58,8 @@ async function enter(page: Page) {
 }
 
 async function noOverflow(page: Page) {
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+  // 视口改变后 ResizeObserver 与 React 布局异步更新，等待最终布局再断言。
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 }
 
 test("分栏选择、筛选和分页清空、保存移出筛选、失败保留备注", async ({ page }) => {
