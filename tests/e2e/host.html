@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>回声 SDK 宿主兼容夹具</title>
+    <style nonce="echo-test-nonce">
+      body {
+        margin: 0;
+        background: #eef1ed;
+        color: #273c31;
+        font: 16px system-ui;
+      }
+      #stage {
+        min-height: 100vh;
+        padding: 48px;
+        background: #eef1ed;
+      }
+      h1 {
+        font-size: 36px;
+      }
+      button {
+        border: 4px solid #a5412e;
+        background: #f8e9bc;
+        color: #732a17;
+        padding: 10px;
+        font-size: 20px;
+      }
+      input {
+        border: 3px dotted red;
+        padding: 8px;
+      }
+      textarea {
+        background: red !important;
+      }
+      p {
+        max-width: 580px;
+        line-height: 1.8;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <h1>宿主页面 · 保持原样</h1>
+      <p>
+        这里包含宿主样式、表单与快捷键。反馈面板挂载到全屏容器，使用独立的 Shadow DOM 样式。这个页面只用于兼容验收。
+      </p>
+      <input aria-label="宿主输入" placeholder="可以继续填写" /><button id="open">提出建议</button
+      ><button id="fullscreen">进入全屏</button><canvas id="canvas" tabindex="0"></canvas>
+      <p id="events">宿主键盘事件：0</p>
+    </div>
+    <script nonce="echo-test-nonce" src="http://127.0.0.1:18730/sdk/0.1.0/echo-feedback.iife.js"></script>
+    <script nonce="echo-test-nonce">
+      window.hostKeys = 0;
+      document.addEventListener("keydown", () => {
+        window.hostKeys += 1;
+        document.querySelector("#events").textContent = "宿主键盘事件：" + window.hostKeys;
+      });
+      const params = new URLSearchParams(location.search);
+      window.mountFeedback = () => {
+        window.feedback = EchoFeedback.init({
+          serverUrl: "http://127.0.0.1:18730",
+          ak: params.get("ak"),
+          showTrigger: false,
+          mountTarget: document.querySelector("#stage"),
+          nonce: "echo-test-nonce",
+          theme: params.get("theme") || "light",
+          uiStyle: params.get("uiStyle") || undefined,
+          primaryColor: params.get("primaryColor") || undefined,
+          onClose: () => document.querySelector("#canvas").focus(),
+          onError: () => {
+            throw new Error("模拟宿主回调异常");
+          },
+        });
+      };
+      mountFeedback();
+      document.querySelector("#open").addEventListener("click", () => feedback.open());
+      document
+        .querySelector("#fullscreen")
+        .addEventListener("click", () => document.querySelector("#stage").requestFullscreen());
+    </script>
+  </body>
+</html>
