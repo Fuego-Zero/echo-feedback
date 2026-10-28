@@ -1,0 +1,44 @@
+{
+  "name": "@echo-feedback/workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.21.1 <23 || >=24"
+  },
+  "scripts": {
+    "dev": "tsx scripts/start.ts",
+    "start": "tsx scripts/start.ts --built",
+    "env:init": "node scripts/setup.mjs",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "data:backup": "tsx scripts/backup.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint apps packages scripts tests",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "build": "pnpm --filter @echo-feedback/sdk build && pnpm --filter @echo-feedback/web build",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "tsx": "4.23.13"
+  },
+  "devDependencies": {
+    "@echo-feedback/contracts": "workspace:*",
+    "@echo-feedback/runtime": "workspace:*",
+    "@fuego0/configs": "1.1.0",
+    "@playwright/test": "1.63.0",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "22.20.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.10.0",
+    "prettier": "3.9.7",
+    "typescript": "5.9.3",
+    "vitest": "5.0.1",
+    "vite": "8.3.0",
+    "sharp": "0.35.5"
+  }
+}
