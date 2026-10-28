@@ -1,0 +1,68 @@
+/* 只覆盖视觉属性，表单、上传、滚动和焦点行为共用基础实现。 */
+:host([data-ui-style="classic"]) {
+  --ef-bg: #fff;
+  --ef-text: #252a3d;
+  --ef-muted: #687085;
+  --ef-line: #858da3;
+  --ef-soft: #f6f7fb;
+  --ef-error: #c43d50;
+}
+:host([data-ui-style="classic"][data-theme="dark"]) {
+  --ef-bg: #191d2a;
+  --ef-text: #f0f1f8;
+  --ef-muted: #a7aec2;
+  --ef-line: #7c859e;
+  --ef-soft: #232939;
+  --ef-error: #ff93a0;
+}
+@media (prefers-color-scheme: dark) {
+  :host([data-ui-style="classic"][data-theme="system"]) {
+    --ef-bg: #191d2a;
+    --ef-text: #f0f1f8;
+    --ef-muted: #a7aec2;
+    --ef-line: #7c859e;
+    --ef-soft: #232939;
+    --ef-error: #ff93a0;
+  }
+}
+:host([data-ui-style="classic"]) .trigger {
+  background: var(--ef-accent);
+  color: var(--ef-on-accent);
+  border-color: transparent;
+  border-radius: 28px;
+}
+:host([data-ui-style="classic"]) dialog {
+  box-shadow: 0 24px 90px #151a3538;
+}
+:host([data-ui-style="classic"]) dialog::backdrop {
+  background: #151a3566;
+}
+:host([data-ui-style="classic"]) header {
+  border-top: 0;
+}
+:host([data-ui-style="classic"]) .eyebrow::before {
+  content: none;
+}
+:host([data-ui-style="classic"]) h2 {
+  font-family: inherit;
+}
+:host([data-ui-style="classic"]) .close {
+  background: var(--ef-soft);
+  border-radius: 50%;
+}
+:host([data-ui-style="classic"]) textarea,
+:host([data-ui-style="classic"]) .contact,
+:host([data-ui-style="classic"]) .add,
+:host([data-ui-style="classic"]) .photo img,
+:host([data-ui-style="classic"]) .submit {
+  border-radius: 10px;
+}
+:host([data-ui-style="classic"]) .success-icon {
+  border: 0;
+  border-radius: 50%;
+}
+@media (min-width: 601px) {
+  :host([data-ui-style="classic"]) dialog {
+    border-radius: 18px;
+  }
+}
