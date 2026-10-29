@@ -2,7 +2,7 @@
 
 本文用于指导其他 AI 在**宿主项目**中接入回声反馈 SDK。目标是复用现有 SDK 完成反馈入口、表单、图片提交和生命周期管理，不重写反馈面板或上传协议。
 
-本文对应 `@echo-feedback/sdk` 0.1.0。无需先了解回声服务端工程；取得下方配置和 SDK 产物即可开始。示例中的地址与 AK 都是占位符，必须替换后才能运行。
+无需先了解回声服务端工程；取得下方配置和 `@echo-feedback/sdk` 产物即可开始。SDK 安装包以实际交付文件为准，script 地址从目标回声后台复制，不根据本文推断版本或拼接地址。示例中的地址与 AK 都是占位符，必须替换后才能运行。
 
 ## 1. 接入前确认四项信息
 
@@ -26,7 +26,7 @@ AK 是公开项目标识，可以出现在前端；它不是管理员密钥。�
 使用宿主已有的包管理器安装收到的产物，例如：
 
 ```sh
-pnpm add /absolute/path/to/echo-feedback-sdk-0.1.0.tgz
+pnpm add "/absolute/path/to/<实际交付的SDK安装包文件名>.tgz"
 ```
 
 如果有回声源码，以下命令在**回声仓库**执行，不能在宿主仓库照抄执行：
@@ -36,14 +36,14 @@ pnpm --filter @echo-feedback/sdk build
 pnpm --dir packages/sdk pack --pack-destination ../../.tmp/packages
 ```
 
-将生成的 tgz 交付给宿主项目，再安装。宿主不能依赖回声工作区内部路径，也不需要安装 contracts、runtime 或 Ant Design。
+将生成的 tgz 交付给宿主项目，再安装；上方安装命令中的路径和文件名必须替换为实际文件。宿主不能依赖回声工作区内部路径，也不需要安装 contracts、runtime 或 Ant Design。
 
 ### 无构建工具的网页：固定版本 script
 
-将脚本放在页面 DOM 之后，或通过宿主已有的脚本加载机制等待加载完成：
+在目标回声后台的“项目接入”中打开该项目的“SDK 接入”，复制“普通 script”代码，使用其中的完整脚本地址替换下方 `src` 占位符，不自行拼接版本路径。将脚本放在页面 DOM 之后，或通过宿主已有的脚本加载机制等待加载完成：
 
 ```html
-<script src="https://feedback.example.com/sdk/0.1.0/echo-feedback.iife.js" referrerpolicy="no-referrer"></script>
+<script src="替换为回声后台提供的完整SDK脚本地址" referrerpolicy="no-referrer"></script>
 <script>
   const feedback = EchoFeedback.init({
     serverUrl: "https://feedback.example.com",
