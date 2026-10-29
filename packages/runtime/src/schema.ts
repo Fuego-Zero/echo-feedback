@@ -11,6 +11,7 @@ export const sessions = sqliteTable("session", {
   expiresAt: integer("expires_at").notNull(),
 });
 export const projects = sqliteTable("project", {
+  deletedAt: integer("deleted_at"),
   id: text("id").primaryKey(),
   ak: text("ak").notNull(),
   name: text("name").notNull(),

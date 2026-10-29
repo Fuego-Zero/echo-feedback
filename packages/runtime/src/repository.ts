@@ -7,7 +7,7 @@ import {
   type Project,
   type ProjectInput,
 } from "@echo-feedback/contracts";
-import { and, count, desc, eq, lt, sum } from "drizzle-orm";
+import { and, count, desc, eq, isNull, lt, sum } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { z } from "zod";
 
@@ -19,7 +19,8 @@ import { randomToken } from "./security.js";
 type ProjectRow = typeof schema.projects.$inferSelect;
 export type StoredAttachment = typeof schema.attachments.$inferSelect;
 const projectFromRow = (row: ProjectRow): Project => {
-  const { allowedOriginsJson, ...value } = row;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- 删除标记仅用于持久化，不暴露到项目协议。
+  const { allowedOriginsJson, deletedAt: _deletedAt, ...value } = row;
   return { ...value, allowedOrigins: z.array(originSchema).parse(JSON.parse(allowedOriginsJson)) };
 };
 
@@ -75,12 +76,14 @@ export class Repository {
       items: this.db
         .select()
         .from(schema.projects)
+        .where(isNull(schema.projects.deletedAt))
         .orderBy(desc(schema.projects.createdAt), desc(schema.projects.id))
         .limit(query.pageSize)
         .offset((query.page - 1) * query.pageSize)
         .all()
         .map(projectFromRow),
-      total: this.db.select({ total: count() }).from(schema.projects).get()!.total,
+      total: this.db.select({ total: count() }).from(schema.projects).where(isNull(schema.projects.deletedAt)).get()!
+        .total,
       page: query.page,
       pageSize: query.pageSize,
     };
@@ -89,16 +92,39 @@ export class Repository {
     return this.db
       .select({ id: schema.projects.id, name: schema.projects.name })
       .from(schema.projects)
+      .where(isNull(schema.projects.deletedAt))
       .orderBy(desc(schema.projects.createdAt), desc(schema.projects.id))
       .all();
   }
   getProject(id: string) {
-    const row = this.db.select().from(schema.projects).where(eq(schema.projects.id, id)).get();
+    const row = this.db
+      .select()
+      .from(schema.projects)
+      .where(and(eq(schema.projects.id, id), isNull(schema.projects.deletedAt)))
+      .get();
     return row && projectFromRow(row);
   }
   getProjectByAk(ak: string) {
-    const row = this.db.select().from(schema.projects).where(eq(schema.projects.ak, ak)).get();
+    const row = this.db
+      .select()
+      .from(schema.projects)
+      .where(and(eq(schema.projects.ak, ak), isNull(schema.projects.deletedAt)))
+      .get();
     return row && projectFromRow(row);
+  }
+  deleteProject(id: string) {
+    this.transaction(() => {
+      if (!this.getProject(id)) {
+        throw new BusinessError("NOT_FOUND", 404);
+      }
+
+      const now = Date.now();
+      this.db
+        .update(schema.projects)
+        .set({ deletedAt: now, enabled: false, updatedAt: now })
+        .where(eq(schema.projects.id, id))
+        .run();
+    });
   }
   saveProject(input: ProjectInput, id?: string) {
     const { allowedOrigins, ...fields } = input;

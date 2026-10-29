@@ -160,9 +160,10 @@ test("响应式抽屉、焦点返回、项目卡片与弹窗", async ({ page }) 
   await noOverflow(page);
   await page.screenshot({ path: `${screenshots}/book-snippet-mobile.png` });
   await page.keyboard.press("Escape");
-  await card.getByRole("button", { name: /停\s*用/ }).click();
-  await expect(page.getByText("停用采集？", { exact: true })).toBeInViewport();
-  await page.getByRole("button", { name: /取\s*消/, exact: true }).click();
+  await card.getByRole("switch").click();
+  await expect(card.getByRole("switch")).not.toBeChecked();
+  await card.getByRole("switch").click();
+  await expect(card.getByRole("switch")).toBeChecked();
   await page.getByRole("button", { name: "创建项目" }).click();
   await expect(page.getByRole("button", { name: "保存项目" })).toBeInViewport();
   const mobileEditor = await page.getByRole("dialog").boundingBox();
@@ -178,7 +179,7 @@ test("响应式抽屉、焦点返回、项目卡片与弹窗", async ({ page }) 
 });
 
 test("接入弹窗同步七套静态 SDK 预览且不可交互", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.setViewportSize({ width: 1920, height: 945 });
   await enter(page);
   await page.getByRole("button", { name: "项目接入", exact: true }).click();
   await page
@@ -209,6 +210,20 @@ test("接入弹窗同步七套静态 SDK 预览且不可交互", async ({ page }
     await expect(page.locator(".sdk-preview iframe")).toHaveAttribute("inert", "");
     await expect(page.locator(".sdk-preview iframe")).toHaveCSS("pointer-events", "none");
     await expect(page.locator(".code-block")).toContainText(`"uiStyle": "${value}"`);
+    await expect(preview.locator('button[type="submit"]')).toBeVisible();
+    expect(
+      await preview
+        .locator('button[type="submit"]')
+        .evaluate(button => button.getBoundingClientRect().bottom <= innerHeight)
+    ).toBe(true);
+    const scroll = await preview.locator("dialog").evaluate(dialog => {
+      const form = dialog.shadowRoot ?? dialog;
+      return Array.from(form.querySelectorAll("*")).some(element => {
+        const style = getComputedStyle(element);
+        return /auto|scroll/.test(style.overflowY) && element.scrollHeight > element.clientHeight + 1;
+      });
+    });
+    expect(scroll).toBe(false);
   }
 
   await preview.locator("form").evaluate(form => form.dispatchEvent(new Event("submit", { cancelable: true })));
@@ -216,6 +231,9 @@ test("接入弹窗同步七套静态 SDK 预览且不可交互", async ({ page }
   const code = await page.locator(".sdk-integration-code").boundingBox();
   const frame = await page.locator(".sdk-preview").boundingBox();
   expect(frame!.x).toBeGreaterThan(code!.x + code!.width);
+  const modal = page.getByRole("dialog");
+  expect(await modal.evaluate(element => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+  expect(frame!.y + frame!.height).toBeLessThan(945);
   await page.screenshot({ path: `${screenshots}/sdk-integration-preview-desktop.png` });
   await page.setViewportSize({ width: 390, height: 844 });
   await noOverflow(page);
