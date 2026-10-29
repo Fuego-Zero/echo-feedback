@@ -261,26 +261,28 @@ export default function ProjectsPage() {
         width={1180}
         onCancel={() => setSnippet(null)}
       >
-        <p>AK 是公开项目标识，不需要用户登录。芸笺等扩展请使用 npm 打包接入。</p>
-        <Space wrap>
-          <span>表单风格</span>
-          <Select
-            options={[
-              { value: "paper", label: "宣纸朱砂" },
-              { value: "classic", label: "经典简洁" },
-              { value: "celadon", label: "青瓷竹简" },
-              { value: "gilded", label: "墨夜鎏金" },
-              { value: "cyber", label: "霓虹边界" },
-              { value: "freedom", label: "自由之翼" },
-              { value: "justice", label: "正义之翼" },
-            ]}
-            value={uiStyle}
-            aria-label="表单风格"
-            onChange={setUiStyle}
-          />
-        </Space>
-        <p className="muted">选择会更新下方接入代码，由宿主项目配置；不会修改项目数据。</p>
+        <p className="sdk-integration-intro">AK 是公开项目标识，不需要用户登录。芸笺等扩展请使用 npm 打包接入。</p>
         <div className="sdk-integration-layout">
+          <div className="sdk-integration-options">
+            <Space wrap>
+              <span>表单风格</span>
+              <Select
+                options={[
+                  { value: "paper", label: "宣纸朱砂" },
+                  { value: "classic", label: "经典简洁" },
+                  { value: "celadon", label: "青瓷竹简" },
+                  { value: "gilded", label: "墨夜鎏金" },
+                  { value: "cyber", label: "霓虹边界" },
+                  { value: "freedom", label: "自由之翼" },
+                  { value: "justice", label: "正义之翼" },
+                ]}
+                value={uiStyle}
+                aria-label="表单风格"
+                onChange={setUiStyle}
+              />
+            </Space>
+            <p className="muted">选择风格后，预览与接入代码同步更新。</p>
+          </div>
           <div className="sdk-integration-code">
             <Tabs
               items={[
@@ -289,7 +291,7 @@ export default function ProjectsPage() {
               ]}
             />
           </div>
-          {snippet && <SdkPreview uiStyle={uiStyle} />}
+          {snippet && <SdkPreview key={uiStyle} uiStyle={uiStyle} />}
         </div>
       </Modal>
     </div>
