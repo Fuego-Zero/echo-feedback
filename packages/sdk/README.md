@@ -2,6 +2,12 @@
 
 框架无关的匿名反馈面板。只需服务地址和公开 AK，不依赖 React 或宿主登录。
 
+```sh
+npm install @echo-feedback/sdk
+```
+
+安装后在宿主项目中按下方示例导入。公开 npm 包不包含服务端；`serverUrl` 指向已部署的回声服务，`ak` 从管理后台的项目接入页获取。
+
 ```ts
 import { init } from "@echo-feedback/sdk";
 const feedback = init({ serverUrl: "https://feedback.example.com", ak: "替换为后台生成的AK" });
