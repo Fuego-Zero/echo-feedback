@@ -1,0 +1,86 @@
+name: Release SDK
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 要发布的 SDK 版本，必须与 main 的 package.json 一致
+        required: true
+        type: string
+concurrency:
+  group: echo-sdk-npm-release
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  prepare:
+    if: >-
+      (github.event.pull_request.merged == true && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      publish: ${{ steps.version.outputs.publish }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          fetch-depth: 0
+      - name: 校验版本与发布条件
+        id: version
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: node scripts/sdkRelease.mjs plan
+      - uses: pnpm/action-setup@v4
+        if: steps.version.outputs.publish == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.version.outputs.publish == 'true'
+        with:
+          node-version: 22.21.1
+          cache: pnpm
+      - if: steps.version.outputs.publish == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.version.outputs.publish == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.version.outputs.publish == 'true'
+        run: pnpm verify
+      - name: 验收实际 npm 安装包
+        if: steps.version.outputs.publish == 'true'
+        run: node tests/sdk/packageSmoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: steps.version.outputs.publish == 'true'
+        with:
+          name: sdk-npm-package
+          path: .tmp/sdk-release/*.tgz
+          include-hidden-files: true
+          if-no-files-found: error
+  publish:
+    needs: prepare
+    if: needs.prepare.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+      - run: npm install --global npm@11.6.2 --registry=https://registry.npmjs.org/
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk-npm-package
+          path: .tmp/sdk-release
+      - name: 通过 npm Trusted Publishing 发布已验收的安装包
+        env:
+          EXPECTED_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: node scripts/sdkRelease.mjs publish

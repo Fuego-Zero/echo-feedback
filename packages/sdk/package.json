@@ -5,9 +5,10 @@
   "description": "回声：框架无关的匿名反馈面板",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
-  "main": "./dist/echo-feedback.iife.js",
+  "main": "./dist/echo-feedback.js",
   "module": "./dist/echo-feedback.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -23,5 +24,19 @@
   "devDependencies": {
     "@echo-feedback/contracts": "workspace:*",
     "vite": "8.3.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fuego-Zero/echo-feedback.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/Fuego-Zero/echo-feedback#readme",
+  "bugs": {
+    "url": "https://github.com/Fuego-Zero/echo-feedback/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

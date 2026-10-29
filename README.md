@@ -34,7 +34,7 @@ pnpm verify
 
 工程沿用岁时记的 pnpm、strict TypeScript、React/Ant Design/Vite、Fastify/Zod、SQLite/Drizzle、@fuego0/configs 和 Docker 部署习惯。回声使用独立数据库和文件目录，没有复制日历业务。首版 SQLite 单实例，不支持多副本。
 
-[AI 快速接入指南](docs/ai-integration.md) · [SDK 接入](docs/sdk.md) · [配置与部署](docs/deployment.md) · [接口与安全](docs/security.md) · [宿主与验收](docs/integration.md)。
+[AI 快速接入指南](docs/ai-integration.md) · [SDK 接入](docs/sdk.md) · [npm 发布流程](docs/npm-release.md) · [配置与部署](docs/deployment.md) · [接口与安全](docs/security.md) · [宿主与验收](docs/integration.md)。
 
 ## 管理列表分页
 
