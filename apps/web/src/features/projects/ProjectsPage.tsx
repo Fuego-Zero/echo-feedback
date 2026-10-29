@@ -6,6 +6,7 @@ import { api } from "../../api/client.js";
 import ListPagination from "../../ListPagination.js";
 import { useElementWidth } from "../../useElementWidth.js";
 import ProjectEditor from "./ProjectEditor.js";
+import SdkPreview from "./SdkPreview.js";
 
 export default function ProjectsPage() {
   const { message } = App.useApp();
@@ -139,7 +140,7 @@ export default function ProjectsPage() {
         />
       )}
       {!error && loading && (
-        <div className="page-state">
+        <div className="page-state is-loading">
           <Spin />
           <p className="muted">正在读取项目…</p>
         </div>
@@ -232,10 +233,11 @@ export default function ProjectsPage() {
         />
       )}
       <Modal
+        destroyOnHidden
         footer={null}
         open={!!snippet}
         title={`${snippet?.name ?? ""} · SDK 接入`}
-        width={700}
+        width={1180}
         onCancel={() => setSnippet(null)}
       >
         <p>AK 是公开项目标识，不需要用户登录。芸笺等扩展请使用 npm 打包接入。</p>
@@ -257,12 +259,17 @@ export default function ProjectsPage() {
           />
         </Space>
         <p className="muted">选择会更新下方接入代码，由宿主项目配置；不会修改项目数据。</p>
-        <Tabs
-          items={[
-            { key: "npm", label: "npm", children: snippetView(npm) },
-            { key: "script", label: "普通 script", children: snippetView(script) },
-          ]}
-        />
+        <div className="sdk-integration-layout">
+          <div className="sdk-integration-code">
+            <Tabs
+              items={[
+                { key: "npm", label: "npm", children: snippetView(npm) },
+                { key: "script", label: "普通 script", children: snippetView(script) },
+              ]}
+            />
+          </div>
+          {snippet && <SdkPreview uiStyle={uiStyle} />}
+        </div>
       </Modal>
     </div>
   );

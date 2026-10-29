@@ -371,6 +371,18 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 6px;
 }
+.page-state.is-loading {
+  min-height: 156px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+.page-state.is-loading p {
+  margin: 0;
+}
 .workspace-main .ant-table-wrapper {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -405,6 +417,33 @@ h1 {
     12px/1.8 ui-monospace,
     Consolas,
     monospace;
+}
+.sdk-integration-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 460px;
+  gap: 24px;
+  align-items: start;
+}
+.sdk-integration-code,
+.sdk-preview {
+  min-width: 0;
+}
+.sdk-preview h3 {
+  margin: 12px 0 4px;
+}
+.sdk-preview iframe {
+  pointer-events: none;
+  display: block;
+  width: 100%;
+  height: 680px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+@media (max-width: 1000px) {
+  .sdk-integration-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .workspace-footer {
   text-align: center;
@@ -653,6 +692,10 @@ h1 {
   }
 }
 @media (max-width: 639px), (pointer: coarse) {
+  .feedback-status .ant-radio-button-wrapper {
+    min-height: 44px;
+    line-height: 42px;
+  }
   .workspace .ant-btn,
   .workspace .ant-select,
   .workspace .ant-input,
