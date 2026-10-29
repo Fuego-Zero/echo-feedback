@@ -62,9 +62,9 @@ if (mode === "plan") {
 
   let published = await fetch(url);
   // npm 注册表的读取节点可能稍晚同步，仅在尚未可见时有限重试。
-  for (let attempt = 0; published.status === 404 && attempt < 5; attempt++) {
+  for (let attempt = 0; published.status === 404 && attempt < 60; attempt++) {
     // eslint-disable-next-line no-await-in-loop -- 重试必须等待上一轮结果，避免并发查询。
-    await setTimeout(2000);
+    await setTimeout(5000);
     // eslint-disable-next-line no-await-in-loop -- 串行读取注册表的最新同步状态。
     published = await fetch(url);
   }
