@@ -1,5 +1,6 @@
 import { Pagination, Select } from "antd";
 
+import { useI18n } from "./LanguageProvider.js";
 import { useElementWidth } from "./useElementWidth.js";
 
 interface Props {
@@ -11,20 +12,25 @@ interface Props {
 }
 
 export default function ListPagination({ page, pageSize, total, disabled, onChange }: Props) {
+  const { t, locale } = useI18n();
   const { ref, width } = useElementWidth();
   return (
-    <nav ref={ref} className="list-pagination" aria-label="列表分页">
+    <nav ref={ref} className="list-pagination" aria-label={t("pagination.label")}>
       <span className="muted">
-        共 {total} 条 · 第 {page} / {Math.max(1, Math.ceil(total / pageSize))} 页
+        {t("pagination.summary", {
+          total: new Intl.NumberFormat(locale).format(total),
+          page,
+          pages: Math.max(1, Math.ceil(total / pageSize)),
+        })}
       </span>
       <div className="page-size">
-        <span>每页</span>
+        <span>{t("pagination.each")}</span>
         <Select
           disabled={disabled}
-          options={[5, 10, 20, 50, 100].map(size => ({ value: size, label: `${size} 条` }))}
-          style={{ width: 96 }}
+          options={[5, 10, 20, 50, 100].map(size => ({ value: size, label: t("pagination.items", { size }) }))}
+          style={{ width: locale === "en" ? 128 : 96 }}
           value={pageSize}
-          aria-label="每页条数"
+          aria-label={t("pagination.size")}
           onChange={size => onChange(1, size)}
         />
       </div>
@@ -33,6 +39,7 @@ export default function ListPagination({ page, pageSize, total, disabled, onChan
         showLessItems
         current={page}
         disabled={disabled}
+        hideOnSinglePage={total === 0}
         pageSize={pageSize}
         showSizeChanger={false}
         simple={width < 640 ? { readOnly: true } : false}

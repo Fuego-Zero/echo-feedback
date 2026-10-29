@@ -3,6 +3,14 @@ import { App, Form, Input, Modal, Switch } from "antd";
 import { useState } from "react";
 
 import { api } from "../../api/client.js";
+import { useI18n } from "../../LanguageProvider.js";
+
+function parseOrigins(value: unknown) {
+  return (typeof value === "string" ? value : "")
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
+}
 
 export default function ProjectEditor({
   project,
@@ -13,6 +21,7 @@ export default function ProjectEditor({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t, errorText } = useI18n();
   const [form] = Form.useForm<{
     name: string;
     description?: string;
@@ -31,23 +40,20 @@ export default function ProjectEditor({
     const input = projectInputSchema.safeParse({
       ...values,
       enabled: project?.enabled ?? values.enabled,
-      allowedOrigins: String(values.allowedOrigins ?? "")
-        .split(/\r?\n/)
-        .map(line => line.trim())
-        .filter(Boolean),
+      allowedOrigins: parseOrigins(values.allowedOrigins),
     });
     if (!input.success) {
-      void message.error(input.error.issues[0]?.message || "请检查输入");
+      void message.error(t("validation.input"));
       return;
     }
 
     setBusy(true);
     try {
       await api(project ? `/admin/projects/${project.id}` : "/admin/projects", project ? "PATCH" : "POST", input.data);
-      void message.success("项目已保存");
+      void message.success(t("project.saved"));
       onSaved();
     } catch (error) {
-      void message.error((error as Error).message);
+      void message.error(errorText((error as Error).message));
     } finally {
       setBusy(false);
     }
@@ -56,10 +62,10 @@ export default function ProjectEditor({
   return (
     <Modal
       open
-      cancelText="取消"
+      cancelText={t("common.cancel")}
       confirmLoading={busy}
-      okText="保存项目"
-      title={project ? "编辑项目" : "创建项目"}
+      okText={t("project.save")}
+      title={project ? t("project.edit") : t("project.create")}
       onCancel={onClose}
       onOk={() => void save()}
     >
@@ -72,29 +78,37 @@ export default function ProjectEditor({
         }
         layout="vertical"
       >
-        <Form.Item label="项目名称" name="name" rules={[{ required: true }]}>
-          <Input maxLength={80} placeholder="例如：岁时记" />
+        <Form.Item label={t("project.name")} name="name" rules={[{ required: true }]}>
+          <Input maxLength={80} placeholder={t("project.example")} />
         </Form.Item>
-        <Form.Item label="项目说明" name="description">
+        <Form.Item label={t("project.description")} name="description">
           <Input.TextArea maxLength={500} rows={2} />
         </Form.Item>
         <Form.Item
-          extra="每行一个完整 Origin，例如 https://app.example.com；留空允许任意 HTTP(S) 网页。"
-          label="允许的网页来源"
+          extra={t("project.originsHint")}
+          label={t("project.origins")}
           name="allowedOrigins"
+          rules={[
+            {
+              validator: (_rule, value: unknown) =>
+                projectInputSchema.shape.allowedOrigins.safeParse(parseOrigins(value)).success
+                  ? Promise.resolve()
+                  : Promise.reject(new Error(t("validation.origin"))),
+            },
+          ]}
         >
           <Input.TextArea placeholder="https://app.example.com" rows={3} />
         </Form.Item>
         <Form.Item
-          extra="兼容扩展来源、无 Origin 和 null Origin；此选项不是身份认证。"
-          label="允许浏览器扩展接入"
+          extra={t("project.extensionsHint")}
+          label={t("project.extensions")}
           name="allowExtensionClients"
           valuePropName="checked"
         >
           <Switch />
         </Form.Item>
         {!project && (
-          <Form.Item label="启用采集" name="enabled" valuePropName="checked">
+          <Form.Item label={t("project.enable")} name="enabled" valuePropName="checked">
             <Switch />
           </Form.Item>
         )}

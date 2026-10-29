@@ -22,3 +22,19 @@
 :host .contact {
   font-size: 14px !important;
 }
+@media (max-width: 360px) {
+  :host header {
+    padding: 18px 48px 14px 16px;
+  }
+  :host h2 {
+    font-size: 22px;
+  }
+  :host .eyebrow {
+    gap: 8px;
+    letter-spacing: 1px;
+  }
+  :host .close {
+    top: 14px;
+    right: 10px;
+  }
+}

@@ -1,7 +1,8 @@
 import type { FeedbackStatus } from "@echo-feedback/contracts";
 
-export const feedbackLabels: Record<FeedbackStatus, string> = {
-  pending: "待处理",
-  processing: "处理中",
-  resolved: "已解决",
-};
+import { useI18n } from "../../LanguageProvider.js";
+
+export function useFeedbackLabels(): Record<FeedbackStatus, string> {
+  const { t } = useI18n();
+  return { pending: t("status.pending"), processing: t("status.processing"), resolved: t("status.resolved") };
+}

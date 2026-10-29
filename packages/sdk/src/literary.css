@@ -45,12 +45,6 @@
   border-top-width: 2px;
   background: linear-gradient(120deg, var(--ef-soft), var(--ef-bg) 75%);
 }
-:host([data-ui-style="celadon"]) .eyebrow::before {
-  background: transparent;
-  color: var(--ef-accent-text);
-  border: 1px solid currentColor;
-  border-radius: 2px 8px;
-}
 :host([data-ui-style="celadon"]) header::after {
   content: "";
   position: absolute;
@@ -68,12 +62,6 @@
 }
 :host([data-ui-style="gilded"]) header {
   border-top: 5px double var(--ef-accent);
-}
-:host([data-ui-style="gilded"]) .eyebrow::before {
-  background: transparent;
-  color: var(--ef-accent-text);
-  border-color: currentColor;
-  border-radius: 0;
 }
 :host([data-ui-style="gilded"]) .trigger {
   border: 3px double var(--ef-line);

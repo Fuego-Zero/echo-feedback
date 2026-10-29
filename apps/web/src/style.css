@@ -73,18 +73,11 @@ h1 {
   margin-top: 7px;
 }
 .brand-mark {
-  display: grid;
-  place-content: center;
+  display: block;
   flex-shrink: 0;
-  width: 34px;
-  height: 46px;
-  font: 19px/1.05 var(--serif);
-  letter-spacing: 0;
-  color: #fbf7ef;
-  background: var(--accent);
-  border: 3px double #fbf7ef;
-  outline: 1px solid var(--accent);
-  border-radius: 3px;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 .workspace {
   min-height: 100dvh;
@@ -130,6 +123,14 @@ h1 {
   display: grid;
   gap: 10px;
 }
+.sidebar-language {
+  display: none;
+}
+.topbar-language {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
 .sidebar nav button {
   min-height: 36px;
   justify-content: flex-start;
@@ -162,12 +163,15 @@ h1 {
   min-height: 52px;
   padding: 8px 24px;
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--line);
 }
 .current-page {
+  flex: 1;
+  min-width: 80px;
   color: var(--muted);
   font-size: 13px;
 }
@@ -347,6 +351,9 @@ h1 {
   padding-top: 14px;
   border-top: 1px solid var(--line);
 }
+.feedback-note {
+  margin-bottom: 24px;
+}
 .ant-descriptions-item-content {
   overflow-wrap: anywhere;
   min-width: 0;
@@ -364,6 +371,9 @@ h1 {
   align-items: center;
   gap: 8px;
   color: var(--ink);
+}
+.project-key {
+  white-space: nowrap;
 }
 .page-state {
   padding: 40px 16px;
@@ -428,9 +438,13 @@ h1 {
 }
 .sdk-integration-options {
   grid-area: options;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
 }
 .sdk-integration-options p {
-  margin: 12px 0 0;
+  flex-basis: 100%;
+  margin: 0;
   font-size: 12px;
 }
 .sdk-integration-code {
@@ -445,6 +459,7 @@ h1 {
 }
 .sdk-preview-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -452,10 +467,13 @@ h1 {
   min-height: 32px;
 }
 .sdk-preview-heading h3 {
+  flex-shrink: 0;
   margin: 0;
   font-size: 14px;
 }
 .sdk-preview-heading .muted {
+  flex: 1;
+  min-width: 160px;
   font-size: 12px;
 }
 .sdk-preview iframe {
@@ -498,7 +516,7 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: clamp(40px, 8vw, 140px);
-  padding: 48px 24px;
+  padding: 80px 24px 48px;
   background:
     repeating-linear-gradient(0deg, #76655203 0px, #76655203 1px, transparent 1px, transparent 4px), var(--paper);
 }
@@ -522,6 +540,14 @@ h1 {
   font: 17px var(--serif);
   color: var(--muted);
   letter-spacing: 3px;
+}
+:lang(en) .auth-verse {
+  font-size: clamp(32px, 3.2vw, 46px);
+  letter-spacing: 0.02em;
+}
+:lang(en) .auth-intro p,
+:lang(en) .sidebar-foot {
+  letter-spacing: 0.02em;
 }
 .auth-card {
   width: min(440px, 100%);
@@ -627,6 +653,22 @@ h1 {
   }
   .sidebar nav {
     display: flex;
+    align-items: center;
+  }
+  .sidebar-navigation {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    margin-left: auto;
+  }
+  .sidebar-language {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .topbar-language {
+    display: none;
   }
   .sidebar-caption,
   .sidebar-foot {
@@ -634,6 +676,10 @@ h1 {
   }
   .workspace-content {
     margin-left: 0;
+  }
+  .topbar {
+    min-height: 52px;
+    padding-right: 24px;
   }
   .auth-intro {
     width: 320px;
@@ -668,12 +714,22 @@ h1 {
     gap: 10px;
   }
   .sidebar nav {
+    flex: 1;
+    min-width: 0;
+  }
+  .sidebar-navigation {
     width: 100%;
+    margin-left: 0;
+    gap: 12px;
   }
   .sidebar nav button {
     flex: 1;
+    min-width: 0;
+    height: auto;
+    padding-inline: 8px;
     justify-content: center;
     text-align: center;
+    white-space: normal;
   }
   .brand {
     font-size: 24px;
@@ -718,7 +774,7 @@ h1 {
     padding: 12px;
   }
   .auth-page {
-    padding: 32px 20px;
+    padding: 80px 20px 32px;
   }
   .auth-card {
     padding: 30px 24px;
@@ -733,6 +789,7 @@ h1 {
 }
 @media (max-width: 639px), (pointer: coarse) {
   .feedback-status .ant-radio-button-wrapper {
+    padding-inline: 8px;
     min-height: 44px;
     line-height: 42px;
   }
@@ -758,4 +815,28 @@ h1 {
   *::after {
     scroll-behavior: auto !important;
   }
+}
+.language-toolbar {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 20;
+}
+.language-trigger.ant-btn {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.language-trigger.ant-btn:hover {
+  color: var(--accent);
+  background: transparent;
+}
+.language-trigger.ant-btn:active {
+  background: transparent;
 }

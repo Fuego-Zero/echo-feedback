@@ -53,21 +53,3 @@ export async function sendSnapshot(serverUrl: string, ak: string, snapshot: Snap
     clearTimeout(timer);
   }
 }
-
-export function errorMessage(error: SubmissionError) {
-  const messages: Record<string, string> = {
-    PROJECT_UNAVAILABLE: "该项目已暂停接收反馈。",
-    ORIGIN_DENIED: "当前页面尚未获准接入，请联系项目管理员。",
-    RATE_LIMITED: "提交有些频繁，请稍后重试。",
-    INVALID_INPUT: "请检查正文和选填信息是否超出限制。",
-    IMAGE_TOO_LARGE: "图片过大，请选择 5 MiB 以内的图片。",
-    INVALID_IMAGE: "图片无法处理，请选择静态 JPG、PNG 或 WebP 图片。",
-    PAYLOAD_TOO_LARGE: "附件总量过大，请减少图片后重试。",
-    STORAGE_FULL: "服务的附件空间不足，请稍后重试。",
-    IDEMPOTENCY_CONFLICT: "本次提交信息冲突，请关闭面板后重新初始化。",
-  };
-  return (
-    messages[error.code] ||
-    (error.uncertain ? "暂未确认是否提交成功。内容已保留，重试不会重复提交。" : "提交失败，请稍后重试。")
-  );
-}

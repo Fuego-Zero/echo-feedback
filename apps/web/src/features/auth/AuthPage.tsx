@@ -3,8 +3,10 @@ import { useState } from "react";
 
 import { api } from "../../api/client.js";
 import Brand from "../../Brand.js";
+import { useI18n } from "../../LanguageProvider.js";
 
 export default function AuthPage({ setup, onReady }: { setup: boolean; onReady: () => void }) {
+  const { t, errorText } = useI18n();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const submit = async (values: Record<string, string>) => {
@@ -14,7 +16,7 @@ export default function AuthPage({ setup, onReady }: { setup: boolean; onReady: 
       await api(setup ? "/setup/admin" : "/auth/login", "POST", values);
       onReady();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "连接失败");
+      setError(error instanceof Error ? error.message : "NETWORK_ERROR");
     } finally {
       setBusy(false);
     }
@@ -25,44 +27,48 @@ export default function AuthPage({ setup, onReady }: { setup: boolean; onReady: 
       <aside className="auth-intro">
         <Brand />
         <div className="auth-verse">
-          <span>一纸心声</span>
-          <span>皆有回响</span>
+          <span>{t("brand.verseFirst")}</span>
+          <span>{t("brand.verseSecond")}</span>
         </div>
-        <p>让每个声音，被听见。</p>
+        <p>{t("auth.motto")}</p>
       </aside>
       <section className="auth-card">
-        <div className="eyebrow">回声 / ECHO</div>
-        <Typography.Title level={2}>{setup ? "让每个声音，被听见。" : "欢迎回到回声"}</Typography.Title>
-        <p className="muted">{setup ? "创建管理员，开始收集产品反馈。" : "把用户的想法，变成产品的下一步。"}</p>
-        {error && <Alert showIcon title={error} type="error" />}
+        <div className="eyebrow">{t("auth.brand")}</div>
+        <Typography.Title level={2}>{setup ? t("auth.motto") : t("auth.welcome")}</Typography.Title>
+        <p className="muted">{setup ? t("auth.setupIntro") : t("auth.loginIntro")}</p>
+        {error && <Alert showIcon title={errorText(error)} type="error" />}
         <Form<Record<string, string>> layout="vertical" requiredMark={false} onFinish={values => void submit(values)}>
           {setup && (
             <Form.Item
-              label="初始化密钥"
+              label={t("auth.token")}
               name="setupToken"
-              rules={[{ required: true, message: "请输入部署配置中的 SETUP_TOKEN" }]}
+              rules={[{ required: true, message: t("auth.tokenRequired") }]}
             >
-              <Input.Password autoComplete="off" placeholder="从服务端 .env 中读取" />
+              <Input.Password autoComplete="off" placeholder={t("auth.tokenHint")} />
             </Form.Item>
           )}
-          <Form.Item label="管理员账号" name="username" rules={[{ required: true, message: "请输入账号" }]}>
+          <Form.Item
+            label={t("auth.username")}
+            name="username"
+            rules={[{ required: true, message: t("auth.usernameRequired") }]}
+          >
             <Input autoComplete="username" maxLength={64} />
           </Form.Item>
           <Form.Item
-            label="密码"
+            label={t("auth.password")}
             name="password"
             rules={[
-              { required: true, message: "请输入密码" },
-              ...(setup ? [{ min: 12, message: "至少 12 位，包含字母和数字" }] : []),
+              { required: true, message: t("auth.passwordRequired") },
+              ...(setup ? [{ min: 12, message: t("account.rule") }] : []),
             ]}
           >
             <Input.Password autoComplete={setup ? "new-password" : "current-password"} maxLength={128} />
           </Form.Item>
           <Button block htmlType="submit" loading={busy} size="large" type="primary">
-            {setup ? "创建管理员" : "登录"}
+            {setup ? t("auth.create") : t("auth.login")}
           </Button>
         </Form>
-        <p className="auth-footnote">轻量、自部署，让反馈留在你自己的服务里。</p>
+        <p className="auth-footnote">{t("auth.footnote")}</p>
       </section>
     </main>
   );

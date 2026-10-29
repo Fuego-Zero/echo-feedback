@@ -2,6 +2,7 @@
 // eslint-disable-next-line import-x/no-extraneous-dependencies
 import { limits } from "@echo-feedback/contracts/limits";
 
+import type { MessageKey } from "./i18n.js";
 import type { View } from "./view.js";
 
 export class Photos {
@@ -9,7 +10,8 @@ export class Photos {
   constructor(
     private view: View,
     private changed: () => void,
-    private report: (message: string) => void
+    private report: (message: MessageKey, params?: Record<string, number>) => void,
+    private localize: () => void
   ) {}
   get files() {
     return this.entries.map(entry => entry.file);
@@ -17,12 +19,12 @@ export class Photos {
   add(files: FileList | null) {
     Array.from(files ?? []).forEach(file => {
       if (this.entries.length >= limits.images) {
-        this.report("最多添加 3 张图片。");
+        this.report("maxImages", { count: limits.images });
         return;
       }
 
       if (file.size > limits.imageBytes || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-        this.report("请选择 5 MiB 以内的 JPG、PNG 或 WebP 图片。");
+        this.report("invalidImage", { size: limits.imageBytes / 1024 / 1024 });
         return;
       }
 
@@ -31,12 +33,12 @@ export class Photos {
       node.className = "photo";
       const image = document.createElement("img");
       image.src = url;
-      image.alt = "待提交图片";
+      image.dataset.efAlt = "imageAlt";
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "remove";
-      remove.textContent = "移除";
-      remove.setAttribute("aria-label", "移除图片");
+      remove.dataset.efText = "remove";
+      remove.dataset.efLabel = "removeImage";
       const entry = { file, url, node };
       remove.addEventListener("click", () => {
         this.entries = this.entries.filter(item => item !== entry);
@@ -47,6 +49,7 @@ export class Photos {
       });
       node.append(image, remove);
       this.view.photos.insertBefore(node, this.view.add);
+      this.localize();
       this.entries.push(entry);
       this.changed();
     });

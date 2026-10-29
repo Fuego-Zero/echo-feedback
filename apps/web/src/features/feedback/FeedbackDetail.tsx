@@ -3,16 +3,19 @@ import { Alert, App, Button, Descriptions, Form, Image, Input, Radio, Space, Typ
 import { useState } from "react";
 
 import { api } from "../../api/client.js";
-import { feedbackLabels as statusLabels } from "./feedbackLabels.js";
+import { useI18n } from "../../LanguageProvider.js";
+import { useFeedbackLabels } from "./feedbackLabels.js";
 
 export default function FeedbackDetail({ feedback, onSaved }: { feedback: Feedback; onSaved: () => void }) {
+  const { t, locale, errorText } = useI18n();
+  const statusLabels = useFeedbackLabels();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const { message } = App.useApp();
   const save = async (values: unknown) => {
     const input = feedbackUpdateSchema.safeParse(values);
     if (!input.success) {
-      void message.error("请检查处理状态和备注长度");
+      void message.error(t("feedback.validation"));
       return;
     }
 
@@ -20,7 +23,7 @@ export default function FeedbackDetail({ feedback, onSaved }: { feedback: Feedba
     setError("");
     try {
       await api(`/admin/feedback/${feedback.id}`, "PATCH", input.data);
-      void message.success("处理记录已保存");
+      void message.success(t("feedback.saved"));
       onSaved();
     } catch (error) {
       setError((error as Error).message);
@@ -38,7 +41,7 @@ export default function FeedbackDetail({ feedback, onSaved }: { feedback: Feedba
           {feedback.attachments.map(image => (
             <Image
               key={image.id}
-              alt="用户主动上传的反馈图片"
+              alt={t("feedback.image")}
               height={100}
               src={`/api/admin/feedback/${feedback.id}/attachments/${image.id}`}
               styles={{ image: { objectFit: "cover" } }}
@@ -51,19 +54,21 @@ export default function FeedbackDetail({ feedback, onSaved }: { feedback: Feedba
         className="detail-meta"
         column={1}
         items={[
-          { key: "time", label: "提交时间", children: new Date(feedback.createdAt).toLocaleString() },
-          { key: "contact", label: "联系方式", children: feedback.contact || "未填写" },
+          { key: "time", label: t("feedback.time"), children: new Date(feedback.createdAt).toLocaleString(locale) },
+          { key: "contact", label: t("feedback.contact"), children: feedback.contact || t("feedback.blank") },
           {
             key: "user",
-            label: "用户标识",
-            children: feedback.userId ? `${feedback.userId}（业务方传入，未验证）` : "未提供",
+            label: t("feedback.user"),
+            children: feedback.userId ? t("feedback.unverified", { user: feedback.userId }) : t("feedback.missing"),
           },
-          { key: "version", label: "项目版本", children: feedback.projectVersion || "未提供" },
+          { key: "version", label: t("feedback.version"), children: feedback.projectVersion || t("feedback.missing") },
           {
             key: "page",
-            label: "来源页面",
+            label: t("feedback.source"),
             children: (
-              <Typography.Text style={{ overflowWrap: "anywhere" }}>{feedback.sourcePage || "未采集"}</Typography.Text>
+              <Typography.Text style={{ overflowWrap: "anywhere" }}>
+                {feedback.sourcePage || t("feedback.notCollected")}
+              </Typography.Text>
             ),
           },
         ]}
@@ -74,9 +79,9 @@ export default function FeedbackDetail({ feedback, onSaved }: { feedback: Feedba
         layout="vertical"
         onFinish={values => void save(values)}
       >
-        {error && <Alert showIcon description={error} title="保存失败" type="error" />}
-        <Form.Item label="处理状态" name="status">
-          <Radio.Group buttonStyle="solid" className="feedback-status" aria-label="处理状态">
+        {error && <Alert showIcon description={errorText(error)} title={t("feedback.saveFailed")} type="error" />}
+        <Form.Item label={t("feedback.status")} name="status">
+          <Radio.Group buttonStyle="solid" className="feedback-status" aria-label={t("feedback.status")}>
             {statuses.map(value => (
               <Radio.Button key={value} value={value}>
                 {statusLabels[value]}
@@ -84,11 +89,11 @@ export default function FeedbackDetail({ feedback, onSaved }: { feedback: Feedba
             ))}
           </Radio.Group>
         </Form.Item>
-        <Form.Item extra="仅管理员可见，不会发送给反馈用户。" label="内部处理备注" name="note">
-          <Input.TextArea showCount maxLength={5000} rows={5} />
+        <Form.Item extra={t("feedback.noteHint")} label={t("feedback.note")} name="note">
+          <Input.TextArea showCount className="feedback-note" maxLength={5000} rows={5} />
         </Form.Item>
         <Button htmlType="submit" loading={busy} type="primary">
-          保存处理记录
+          {t("feedback.save")}
         </Button>
       </Form>
     </>

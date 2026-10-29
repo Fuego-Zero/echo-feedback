@@ -20,7 +20,10 @@ assert.ok(entries.includes("package/dist/echo-feedback.js"));
 assert.ok(entries.includes("package/dist/echo-feedback.iife.js"));
 assert.ok(entries.includes("package/dist/index.d.ts"));
 assert.ok(entries.includes("package/LICENSE"));
-assert.ok(entries.every(path => /^package\/(?:dist\/[^/]+\.(?:js|ts)|package\.json|README\.md|LICENSE)$/.test(path)));
+assert.ok(entries.includes("package/README.en.md"));
+assert.ok(
+  entries.every(path => /^package\/(?:dist\/[^/]+\.(?:js|ts)|package\.json|README(?:\.en)?\.md|LICENSE)$/.test(path))
+);
 const consumer = await mkdtemp(resolve(".tmp/sdk-consumer-"));
 execFileSync("tar", ["-xzf", archive, "-C", consumer]);
 const manifest = JSON.parse(await readFile(join(consumer, "package/package.json"), "utf8"));
@@ -44,15 +47,20 @@ await writeFile(
   join(consumer, "install.mjs"),
   `import { init } from ${JSON.stringify(manifest.name)};
 const instance=init({serverUrl:'https://example.test',ak:'a'.repeat(43)});
-instance.open(); instance.destroy();
+instance.open({locale:'en'}); instance.setLocale('zh-CN'); instance.destroy();
 if(typeof init!=='function')throw Error('SDK 导出不可用');`
 );
 execFileSync(process.execPath, ["install.mjs"], { cwd: consumer, stdio: "inherit" });
 await writeFile(
   join(consumer, "types.ts"),
   `import { init, type FeedbackOptions } from ${JSON.stringify(manifest.name)};
-const options: FeedbackOptions={serverUrl:'https://example.test',ak:'a'.repeat(43),uiStyle:'justice',theme:'system'};
-init(options).destroy();`
+const options: FeedbackOptions={serverUrl:'https://example.test',ak:'a'.repeat(43),uiStyle:'justice',theme:'system',locale:'auto'};
+const instance=init(options);
+instance.open({locale:'en'});
+instance.setLocale('zh-CN');
+// @ts-expect-error 不接受未支持的配置。
+instance.setLocale('fr');
+instance.destroy();`
 );
 execFileSync(
   process.execPath,
@@ -60,7 +68,6 @@ execFileSync(
     resolve("node_modules/typescript/bin/tsc"),
     "--noEmit",
     "--strict",
-    "--skipLibCheck",
     "--module",
     "NodeNext",
     "--moduleResolution",
