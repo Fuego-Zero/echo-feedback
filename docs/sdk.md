@@ -1,5 +1,15 @@
 # SDK 接入
 
+## 中英文语言
+
+SDK 支持 `locale: "auto" | "zh-CN" | "en"`，默认自动跟随宿主页面语言，页面无匹配时参考浏览器语言，最后回退中文。固定语言可在 `init` 中设置；宿主已有多语言状态时，每次 `open({ locale: 当前宿主语言 })` 最可靠。地区标签需要先归一化为 `zh-CN` 或 `en` 后传给 TypeScript 接口。
+
+`open({ locale })` 只影响本次打开；`open({ locale: "auto" })` 可覆盖实例固定语言并自动判断。`setLocale()` 更新实例设置，也更新已打开的表单和自带悬浮按钮，不需要销毁重建。切换保留正文、联系方式、图片、焦点、在途请求和冻结快照；响应丢失后继续使用原幂等键重试。表单打开后不会因为宿主 DOM 或浏览器偏好改变而自行切换。
+
+后台首次进入时自动匹配浏览器语言，“界面语言”菜单只提供简体中文和 English，并标记当前实际语言；手动选择后在当前浏览器保存偏好。“SDK 接入”中的“表单语言”仅控制预览与生成代码，不修改项目数据库；自动模式的预览参考后台当前页面语言，实际 SDK 在终端参考实际宿主页面。界面语言不会翻译用户正文、项目名称或管理员备注，也不改变日期时区。
+
+完整规则参见 [SDK 中文说明](../packages/sdk/README.md) / [English SDK guide](../packages/sdk/README.en.md)。中英文接口从 SDK 0.2.0 提供；升级 npm 包或使用后台生成的新脚本地址后生效。旧 `/sdk/0.1.0/` 地址保留为兼容入口，随服务更新提供当前构建，不保证历史构建内容不变。
+
 交给其他 AI 实施时，先阅读 [AI 快速接入指南](ai-integration.md)，其中包含配置清单、框架示例和验收步骤。
 
 ## npm 包
@@ -10,7 +20,7 @@
 pnpm --filter @echo-feedback/sdk build
 pnpm --dir packages/sdk pack --pack-destination ../../.tmp/packages
 # 在业务项目中使用生成的 tgz：
-npm install /path/to/echo-feedback-sdk-0.1.0.tgz
+npm install /path/to/echo-feedback-sdk-0.2.0.tgz
 ```
 
 ```ts
@@ -34,7 +44,7 @@ document.querySelector("#feedback-button")?.addEventListener("click", () => {
 ## 普通 script
 
 ```html
-<script src="https://feedback.example.com/sdk/0.1.0/echo-feedback.iife.js" referrerpolicy="no-referrer"></script>
+<script src="https://feedback.example.com/sdk/0.2.0/echo-feedback.iife.js" referrerpolicy="no-referrer"></script>
 <script>
   const feedback = EchoFeedback.init({
     serverUrl: "https://feedback.example.com",
