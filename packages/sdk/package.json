@@ -1,6 +1,6 @@
 {
   "name": "@echo-feedback/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "回声：框架无关的匿名反馈面板",
   "files": [
