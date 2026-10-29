@@ -207,8 +207,17 @@ test("接入弹窗同步七套静态 SDK 预览且不可交互", async ({ page }
     await page.getByText(label, { exact: true }).last().click();
     await expect(preview.locator("echo-feedback")).toHaveAttribute("data-ui-style", value);
     await expect(preview.locator("dialog[open]")).toBeVisible();
+    await expect(page.locator(".sdk-preview")).toHaveAttribute("data-ready", "true");
     await expect(page.locator(".sdk-preview iframe")).toHaveAttribute("inert", "");
     await expect(page.locator(".sdk-preview iframe")).toHaveCSS("pointer-events", "none");
+    await expect(page.locator(".sdk-preview iframe")).toHaveCSS("transform", "none");
+    await expect(preview.locator("textarea")).toHaveCSS("font-size", "14px");
+    // 预览不使用顶层 modal，避免切换风格时夺取焦点或产生遮罩。
+    await expect(preview.locator("dialog:modal")).toHaveCount(0);
+    await expect(page.getByLabel("表单风格", { exact: true })).toBeFocused();
+    expect(
+      await preview.locator("dialog").evaluate(dialog => Math.abs(dialog.getBoundingClientRect().height - innerHeight))
+    ).toBeLessThanOrEqual(1);
     await expect(page.locator(".code-block")).toContainText(`"uiStyle": "${value}"`);
     await expect(preview.locator('button[type="submit"]')).toBeVisible();
     expect(
@@ -237,6 +246,15 @@ test("接入弹窗同步七套静态 SDK 预览且不可交互", async ({ page }
   await page.screenshot({ path: `${screenshots}/sdk-integration-preview-desktop.png` });
   await page.setViewportSize({ width: 390, height: 844 });
   await noOverflow(page);
+  const optionsBox = await page.locator(".sdk-integration-options").boundingBox();
+  const previewBox = await page.locator(".sdk-preview").boundingBox();
+  const codeBox = await page.locator(".sdk-integration-code").boundingBox();
+  expect(optionsBox!.y).toBeLessThan(previewBox!.y);
+  expect(previewBox!.y).toBeLessThan(codeBox!.y);
+  // 其他窗口不能伪造预览尺寸，破坏画布比例。
+  const initialHeight = await page.locator("iframe").getAttribute("style");
+  await page.evaluate(() => window.postMessage({ type: "echo-preview-size", height: 1100 }, "*"));
+  await expect(page.locator("iframe")).toHaveAttribute("style", initialHeight!);
   await page.locator(".sdk-preview").scrollIntoViewIfNeeded();
   await expect(preview.locator("dialog[open]")).toBeVisible();
   await page.screenshot({ path: `${screenshots}/sdk-integration-preview-mobile.png` });

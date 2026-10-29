@@ -420,45 +420,69 @@ h1 {
 }
 .sdk-integration-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, min(360px, calc((100dvh - 320px) * 0.575)));
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 460px;
+  grid-template-areas: "options preview" "code preview";
+  grid-template-rows: auto 1fr;
+  gap: 12px 32px;
   align-items: start;
+}
+.sdk-integration-options {
+  grid-area: options;
+}
+.sdk-integration-options p {
+  margin: 12px 0 0;
+  font-size: 12px;
+}
+.sdk-integration-code {
+  grid-area: code;
+}
+.sdk-preview {
+  grid-area: preview;
 }
 .sdk-integration-code,
 .sdk-preview {
   min-width: 0;
 }
-.sdk-preview h3 {
-  margin: 12px 0 4px;
+.sdk-preview-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  min-height: 32px;
+}
+.sdk-preview-heading h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.sdk-preview-heading .muted {
+  font-size: 12px;
 }
 .sdk-preview iframe {
   pointer-events: none;
   display: block;
-  width: 460px;
-  height: 800px;
-  transform-origin: top left;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--surface);
-}
-.sdk-preview-stage {
   width: 100%;
-}
-.sdk-preview-fit {
-  margin: 0 auto;
-  overflow: hidden;
+  border: 0;
+  background: transparent;
 }
 .sdk-integration-modal {
   top: 24px;
   padding-bottom: 24px;
 }
+.sdk-integration-intro {
+  margin: 4px 0 20px;
+}
 @media (max-width: 1000px) {
-  .sdk-preview-stage {
-    max-width: 320px;
-    margin: 0 auto;
-  }
   .sdk-integration-layout {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "options" "preview" "code";
+    grid-template-rows: auto;
+    row-gap: 24px;
+  }
+  .sdk-preview {
+    width: 100%;
+    max-width: 460px;
+    justify-self: center;
   }
 }
 .workspace-footer {

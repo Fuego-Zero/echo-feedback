@@ -1,0 +1,24 @@
+/* 仅调整嵌入排版，沿用 SDK 的文字、颜色、控件与皮肤装饰，不做整图缩放。 */
+:host dialog {
+  position: relative !important;
+  inset: auto !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  border: 1px solid var(--ef-line) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+:host .layout {
+  height: auto !important;
+  max-height: none !important;
+}
+:host .body {
+  overflow: visible !important;
+  flex: none !important;
+}
+:host textarea,
+:host .contact {
+  font-size: 14px !important;
+}
