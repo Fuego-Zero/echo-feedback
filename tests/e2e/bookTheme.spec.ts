@@ -104,8 +104,8 @@ test("抽屉选择、筛选分页、保存移出筛选、失败保留备注", as
   await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
   await page.locator(".feedback-card").first().click();
   const selectedName = await page.locator('.feedback-card[aria-pressed="true"]').getAttribute("aria-label");
-  await page.getByLabel("处理状态", { exact: true }).click();
-  await page.getByText("已解决", { exact: true }).last().click();
+  await page.locator(".feedback-status").getByText("已解决", { exact: true }).click();
+  await expect(page.getByRole("radio", { name: "已解决", exact: true })).toBeChecked();
   await page.getByRole("button", { name: "保存处理记录" }).click();
   await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: selectedName!, exact: true })).toHaveCount(0);
@@ -144,7 +144,7 @@ test("响应式抽屉、焦点返回、项目卡片与弹窗", async ({ page }) 
   await page.screenshot({ path: `${screenshots}/book-projects-mobile.png`, fullPage: true });
   await card.getByRole("button", { name: /接\s*入/ }).click();
   await expect(page.locator(".code-block")).toContainText("@echo-feedback/sdk");
-  await page.getByLabel("表单风格").click();
+  await page.getByLabel("表单风格", { exact: true }).click();
   await page.getByText("经典简洁", { exact: true }).last().click();
   await expect(page.locator(".code-block")).toContainText('"uiStyle": "classic"');
   for (const [label, value] of [
@@ -152,7 +152,7 @@ test("响应式抽屉、焦点返回、项目卡片与弹窗", async ({ page }) 
     ["墨夜鎏金", "gilded"],
     ["正义之翼", "justice"],
   ]) {
-    await page.getByLabel("表单风格").click();
+    await page.getByLabel("表单风格", { exact: true }).click();
     await page.getByText(label, { exact: true }).last().click();
     await expect(page.locator(".code-block")).toContainText(`"uiStyle": "${value}"`);
   }
@@ -175,6 +175,55 @@ test("响应式抽屉、焦点返回、项目卡片与弹窗", async ({ page }) 
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "反馈收件箱" }).click();
   await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
+});
+
+test("接入弹窗同步七套静态 SDK 预览且不可交互", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await enter(page);
+  await page.getByRole("button", { name: "项目接入", exact: true }).click();
+  await page
+    .getByRole("row")
+    .filter({ hasText: project.ak.slice(0, 12) })
+    .getByRole("button", { name: /接\s*入/ })
+    .click();
+  const preview = page.frameLocator('iframe[title="SDK 表单风格预览"]');
+  const submissions: string[] = [];
+  page.on("request", request => {
+    if (request.method() === "POST" && request.url().includes("/api/public/")) {
+      submissions.push(request.url());
+    }
+  });
+  for (const [label, value] of [
+    ["宣纸朱砂", "paper"],
+    ["经典简洁", "classic"],
+    ["青瓷竹简", "celadon"],
+    ["墨夜鎏金", "gilded"],
+    ["霓虹边界", "cyber"],
+    ["自由之翼", "freedom"],
+    ["正义之翼", "justice"],
+  ]) {
+    await page.getByLabel("表单风格", { exact: true }).click();
+    await page.getByText(label, { exact: true }).last().click();
+    await expect(preview.locator("echo-feedback")).toHaveAttribute("data-ui-style", value);
+    await expect(preview.locator("dialog[open]")).toBeVisible();
+    await expect(page.locator(".sdk-preview iframe")).toHaveAttribute("inert", "");
+    await expect(page.locator(".sdk-preview iframe")).toHaveCSS("pointer-events", "none");
+    await expect(page.locator(".code-block")).toContainText(`"uiStyle": "${value}"`);
+  }
+
+  await preview.locator("form").evaluate(form => form.dispatchEvent(new Event("submit", { cancelable: true })));
+  expect(submissions).toEqual([]);
+  const code = await page.locator(".sdk-integration-code").boundingBox();
+  const frame = await page.locator(".sdk-preview").boundingBox();
+  expect(frame!.x).toBeGreaterThan(code!.x + code!.width);
+  await page.screenshot({ path: `${screenshots}/sdk-integration-preview-desktop.png` });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await noOverflow(page);
+  await page.locator(".sdk-preview").scrollIntoViewIfNeeded();
+  await expect(preview.locator("dialog[open]")).toBeVisible();
+  await page.screenshot({ path: `${screenshots}/sdk-integration-preview-mobile.png` });
+  await page.locator(".ant-modal-close").click();
+  await expect(page.locator("iframe")).toHaveCount(0);
 });
 
 test("列表失败与空状态分离，初始化和登录视觉", async ({ page }) => {

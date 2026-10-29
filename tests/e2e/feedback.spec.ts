@@ -105,8 +105,7 @@ test("PC/H5 两项目文字图片、后台筛选与处理、附件保护", async
   await page.getByLabel("筛选项目").click();
   await page.getByText("风铃验收", { exact: true }).last().click();
   await page.getByRole("button", { name: "手机横屏时希望操作区域更清楚" }).click();
-  await page.getByLabel("处理状态").click();
-  await page.getByText("已解决", { exact: true }).last().click();
+  await page.locator(".feedback-status").getByText("已解决", { exact: true }).click();
   await page.getByLabel("内部处理备注").fill("已经调整，待下个版本发布");
   await page.getByRole("button", { name: "保存处理记录" }).click();
   await expect(page.locator(".feedback-card .status-tag").getByText("已解决", { exact: true })).toBeVisible();

@@ -1,5 +1,5 @@
 import { type Feedback, feedbackUpdateSchema, statuses } from "@echo-feedback/contracts";
-import { Alert, App, Button, Descriptions, Form, Image, Input, Select, Space, Typography } from "antd";
+import { Alert, App, Button, Descriptions, Form, Image, Input, Radio, Space, Typography } from "antd";
 import { useState } from "react";
 
 import { api } from "../../api/client.js";
@@ -76,7 +76,13 @@ export default function FeedbackDetail({ feedback, onSaved }: { feedback: Feedba
       >
         {error && <Alert showIcon description={error} title="保存失败" type="error" />}
         <Form.Item label="处理状态" name="status">
-          <Select options={statuses.map(value => ({ value, label: statusLabels[value] }))} />
+          <Radio.Group buttonStyle="solid" className="feedback-status" aria-label="处理状态">
+            {statuses.map(value => (
+              <Radio.Button key={value} value={value}>
+                {statusLabels[value]}
+              </Radio.Button>
+            ))}
+          </Radio.Group>
         </Form.Item>
         <Form.Item extra="仅管理员可见，不会发送给反馈用户。" label="内部处理备注" name="note">
           <Input.TextArea showCount maxLength={5000} rows={5} />

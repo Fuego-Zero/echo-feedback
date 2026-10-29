@@ -167,7 +167,7 @@ export default function FeedbackPage() {
             />
           )}
           {!error && loading && (
-            <div className="page-state">
+            <div className="page-state is-loading">
               <Spin />
               <p className="muted">正在读取反馈…</p>
             </div>
