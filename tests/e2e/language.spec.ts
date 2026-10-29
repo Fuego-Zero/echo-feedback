@@ -267,6 +267,7 @@ test("后台语言独立、刷新记忆、错误按当前语言显示及英文�
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("button", { name: "Feedback inbox", exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Feedback list", exact: true })).toHaveAttribute("aria-busy", "false");
   await page.route("**/api/admin/feedback?**", route =>
     route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "SERVICE_BUSY" }) })
   );
