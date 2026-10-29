@@ -13,6 +13,8 @@ const mime: Record<string, string> = {
   ".css": "text/css",
   ".html": "text/html",
   ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".ico": "image/vnd.microsoft.icon",
   ".json": "application/json",
 };
 async function staticFile(res: ServerResponse, directory: string, pathname: string) {
@@ -69,10 +71,11 @@ export async function createWebServer(config: Config, built: boolean) {
         return;
       }
 
-      if (pathname.startsWith("/sdk/0.1.0/")) {
+      const sdkPrefix = ["/sdk/0.2.0/", "/sdk/0.1.0/"].find(prefix => pathname.startsWith(prefix));
+      if (sdkPrefix) {
         res.setHeader("Access-Control-Allow-Origin", "*");
         res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-        await staticFile(res, "packages/sdk/dist", pathname.slice("/sdk/0.1.0".length));
+        await staticFile(res, "packages/sdk/dist", pathname.slice(sdkPrefix.length - 1));
         return;
       }
 

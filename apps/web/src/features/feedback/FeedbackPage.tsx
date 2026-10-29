@@ -3,11 +3,14 @@ import { Alert, Button, Drawer, Empty, Select, Spin, Tag } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "../../api/client.js";
+import { useI18n } from "../../LanguageProvider.js";
 import ListPagination from "../../ListPagination.js";
 import FeedbackDetail from "./FeedbackDetail.js";
-import { feedbackLabels as statusLabels } from "./feedbackLabels.js";
+import { useFeedbackLabels } from "./feedbackLabels.js";
 
 export default function FeedbackPage() {
+  const { t, locale, errorText } = useI18n();
+  const statusLabels = useFeedbackLabels();
   const [projects, setProjects] = useState<Pick<Project, "id" | "name">[]>([]);
   const [projectError, setProjectError] = useState("");
   const [projectId, setProjectId] = useState<string>();
@@ -101,25 +104,25 @@ export default function FeedbackPage() {
     <div>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">回声 / INBOX</div>
-          <h1>每一个声音，都值得回应。</h1>
-          <p className="muted">收集想法，发现问题，记录每一次改进。</p>
+          <div className="eyebrow">{t("feedback.eyebrow")}</div>
+          <h1>{t("feedback.heading")}</h1>
+          <p className="muted">{t("feedback.intro")}</p>
         </div>
         <Button loading={loading} onClick={() => void load()}>
-          刷新反馈
+          {t("feedback.refresh")}
         </Button>
       </div>
       {projectError && (
         <Alert
           showIcon
-          action={<Button onClick={() => void loadProjects()}>重试</Button>}
-          description={projectError}
-          title="项目筛选加载失败"
+          action={<Button onClick={() => void loadProjects()}>{t("common.retry")}</Button>}
+          description={errorText(projectError)}
+          title={t("feedback.projectsFailed")}
           type="error"
         />
       )}
       <div className="filter-bar">
-        <div className="status-filters" role="group" aria-label="筛选状态">
+        <div className="status-filters" role="group" aria-label={t("feedback.filterStatus")}>
           {[undefined, ...statuses].map(value => (
             <Button
               key={value ?? "all"}
@@ -131,7 +134,7 @@ export default function FeedbackPage() {
                 setSelected(undefined);
               }}
             >
-              {value ? statusLabels[value] : "全部"}
+              {value ? statusLabels[value] : t("common.all")}
             </Button>
           ))}
         </div>
@@ -141,41 +144,45 @@ export default function FeedbackPage() {
             showSearch
             optionFilterProp="label"
             options={projects.map(item => ({ value: item.id, label: item.name }))}
-            placeholder="全部项目"
+            placeholder={t("feedback.allProjects")}
             style={{ width: 190 }}
             value={projectId}
-            aria-label="筛选项目"
+            aria-label={t("feedback.filterProject")}
             onChange={value => {
               setProjectId(value);
               setPage(1);
               setSelected(undefined);
             }}
           />
-          {!loading && !error && <span className="muted">共 {result.total} 条反馈</span>}
+          {!loading && !error && (
+            <span className="muted">
+              {t("feedback.total", { total: new Intl.NumberFormat(locale).format(result.total) })}
+            </span>
+          )}
         </div>
       </div>
 
       <div className="feedback-layout">
-        <section className="feedback-list" aria-busy={loading} aria-label="反馈列表">
+        <section className="feedback-list" aria-busy={loading} aria-label={t("feedback.list")}>
           {error && (
             <Alert
               showIcon
-              action={<Button onClick={() => void load()}>重试</Button>}
-              description={error}
-              title="反馈加载失败"
+              action={<Button onClick={() => void load()}>{t("common.retry")}</Button>}
+              description={errorText(error)}
+              title={t("feedback.loadFailed")}
               type="error"
             />
           )}
           {!error && loading && (
             <div className="page-state is-loading">
               <Spin />
-              <p className="muted">正在读取反馈…</p>
+              <p className="muted">{t("feedback.loading")}</p>
             </div>
           )}
           {!error && !loading && result.items.length === 0 && (
             <div className="page-state">
               <Empty
-                description={projectId || status ? "当前筛选下没有反馈" : "还没有反馈。先在项目中复制 SDK 接入示例。"}
+                description={projectId || status ? t("feedback.noMatch") : t("feedback.empty")}
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
             </div>
@@ -205,11 +212,15 @@ export default function FeedbackPage() {
                   <Tag className={`status-tag ${item.status}`}>{statusLabels[item.status]}</Tag>
                 </span>
                 <span className="contact-line">
-                  {item.attachments.length ? `${item.attachments.length} 张图片 · ` : ""}
-                  {item.contact || "未留联系方式"}
+                  {item.attachments.length
+                    ? t(item.attachments.length === 1 ? "feedback.imageSingle" : "feedback.images", {
+                        count: item.attachments.length,
+                      })
+                    : ""}
+                  {item.contact || t("feedback.noContact")}
                 </span>
                 <span className="feedback-card-meta">
-                  <time>{new Date(item.createdAt).toLocaleString()}</time>
+                  <time>{new Date(item.createdAt).toLocaleString(locale)}</time>
                 </span>
               </Button>
             ))}
@@ -236,7 +247,7 @@ export default function FeedbackPage() {
         }}
         open={!!selected}
         styles={{ wrapper: { width: "min(620px, 100vw)" } }}
-        title="反馈详情"
+        title={t("feedback.detail")}
         onClose={close}
       >
         {detail}

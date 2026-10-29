@@ -1,11 +1,14 @@
+import brandMark from "../../../assets/brand/echo-mark.svg";
+import { useI18n } from "./LanguageProvider.js";
+
 export default function Brand() {
+  const { t } = useI18n();
   return (
     <span className="brand">
-      <span className="brand-mark" aria-hidden="true">
-        回<br />声
-      </span>
+      <img alt="" className="brand-mark" height="40" src={brandMark} width="40" aria-hidden="true" />
       <span>
-        回声<small>ECHO FEEDBACK</small>
+        {t("brand.name")}
+        <small>ECHO FEEDBACK</small>
       </span>
     </span>
   );

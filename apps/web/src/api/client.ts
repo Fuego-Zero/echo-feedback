@@ -1,12 +1,3 @@
-const messages: Record<string, string> = {
-  AUTH_REQUIRED: "登录已过期，请重新登录",
-  INVALID_CREDENTIALS: "账号、密码或初始化密钥不正确",
-  INVALID_INPUT: "请检查输入内容",
-  SETUP_CLOSED: "初始化已完成，请登录",
-  ORIGIN_DENIED: "当前来源未获允许",
-  RATE_LIMITED: "操作太频繁，请稍后再试",
-  SERVICE_BUSY: "服务繁忙，请稍后再试",
-};
 export async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
     method,
@@ -21,7 +12,7 @@ export async function api<T>(path: string, method = "GET", body?: unknown): Prom
       window.dispatchEvent(new Event("echo:auth-expired"));
     }
 
-    throw new Error(messages[result.code] ?? "操作未完成，请稍后重试");
+    throw new Error(result?.code || "REQUEST_FAILED");
   }
 
   return result as T;

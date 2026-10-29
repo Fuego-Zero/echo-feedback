@@ -1,14 +1,17 @@
 import { type Page, type Project } from "@echo-feedback/contracts";
+import type { LocalePreference } from "@echo-feedback/contracts/locale";
 import { Alert, App, Button, Empty, Modal, Select, Space, Spin, Switch, Table, Tabs, Typography } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "../../api/client.js";
+import { useI18n } from "../../LanguageProvider.js";
 import ListPagination from "../../ListPagination.js";
 import { useElementWidth } from "../../useElementWidth.js";
 import ProjectEditor from "./ProjectEditor.js";
 import SdkPreview from "./SdkPreview.js";
 
 export default function ProjectsPage() {
+  const { t, errorText } = useI18n();
   const { message } = App.useApp();
   const [result, setResult] = useState<Page<Project>>({ items: [], total: 0, page: 1, pageSize: 20 });
   const projects = result.items;
@@ -21,6 +24,7 @@ export default function ProjectsPage() {
   const { ref, width } = useElementWidth();
   const [editor, setEditor] = useState<Project | "new" | null>(null);
   const [snippet, setSnippet] = useState<Project | null>(null);
+  const [formLocale, setFormLocale] = useState<LocalePreference>("auto");
   const [uiStyle, setUiStyle] = useState<"paper" | "classic" | "celadon" | "gilded" | "cyber" | "freedom" | "justice">(
     "paper"
   );
@@ -72,10 +76,10 @@ export default function ProjectsPage() {
         allowExtensionClients,
         enabled: !project.enabled,
       });
-      void message.success(project.enabled ? "已停用采集" : "已启用采集");
+      void message.success(project.enabled ? t("project.disabledToast") : t("project.enabledToast"));
       await load();
     } catch (error) {
-      void message.error((error as Error).message);
+      void message.error(errorText((error as Error).message));
     } finally {
       setBusy(value => value.filter(id => id !== project.id));
     }
@@ -85,10 +89,10 @@ export default function ProjectsPage() {
     setBusy(value => [...value, project.id]);
     try {
       await api(`/admin/projects/${project.id}`, "DELETE");
-      void message.success("项目已删除，历史反馈仍保留");
+      void message.success(t("project.deleted"));
       await load();
     } catch (error) {
-      void message.error((error as Error).message);
+      void message.error(errorText((error as Error).message));
     } finally {
       setBusy(value => value.filter(id => id !== project.id));
     }
@@ -97,10 +101,10 @@ export default function ProjectsPage() {
   const collectionSwitch = (item: Project) => (
     <Switch
       checked={item.enabled}
-      checkedChildren="已启用"
+      checkedChildren={t("project.enabled")}
       loading={busy.includes(item.id)}
-      unCheckedChildren="已停用"
-      aria-label={`${item.name}采集`}
+      unCheckedChildren={t("project.disabled")}
+      aria-label={t("project.collectionLabel", { name: item.name })}
       onChange={() => void toggle(item)}
     />
   );
@@ -108,33 +112,37 @@ export default function ProjectsPage() {
   const actions = (item: Project) => (
     <Space>
       <Button type="link" onClick={() => setEditor(item)}>
-        编辑
+        {t("common.edit")}
       </Button>
       <Button type="link" onClick={() => setSnippet(item)}>
-        接入
+        {t("project.integrate")}
       </Button>
       <Button danger disabled={busy.includes(item.id)} type="link" onClick={() => void remove(item)}>
-        删除
+        {t("common.delete")}
       </Button>
     </Space>
   );
   const options = snippet
-    ? JSON.stringify({ serverUrl: location.origin, ak: snippet.ak, showTrigger: true, uiStyle }, null, 2)
+    ? JSON.stringify(
+        { serverUrl: location.origin, ak: snippet.ak, showTrigger: true, uiStyle, locale: formLocale },
+        null,
+        2
+      )
     : "";
   const npm = `import { init } from '@echo-feedback/sdk';\n\nconst feedback = init(${options});\n// 自定义入口：设置 showTrigger: false，然后调用 feedback.open()。\n// 页面卸载：feedback.destroy();`;
-  const script = `<script src="${location.origin}/sdk/0.1.0/echo-feedback.iife.js" referrerpolicy="no-referrer"></script>\n<script>\nconst feedback = EchoFeedback.init(${options});\n</script>`;
+  const script = `<script src="${location.origin}/sdk/0.2.0/echo-feedback.iife.js" referrerpolicy="no-referrer"></script>\n<script>\nconst feedback = EchoFeedback.init(${options});\n</script>`;
   const snippetView = (code: string) => (
     <>
       <pre className="code-block">{code}</pre>
       <Button
         onClick={() => {
           void navigator.clipboard.writeText(code).then(
-            () => message.success("已复制"),
-            () => message.error("复制失败，请手动选择代码")
+            () => message.success(t("common.copied")),
+            () => message.error(t("common.copyFailed"))
           );
         }}
       >
-        复制示例
+        {t("integration.copy")}
       </Button>
     </>
   );
@@ -142,36 +150,36 @@ export default function ProjectsPage() {
     <div ref={ref}>
       <div className="page-heading">
         <div>
-          <h1>连接你的产品</h1>
-          <p className="muted">每个项目一个接入标识，所有反馈集中处理。</p>
+          <h1>{t("project.heading")}</h1>
+          <p className="muted">{t("project.intro")}</p>
         </div>
         <Button size="large" type="primary" onClick={() => setEditor("new")}>
-          创建项目
+          {t("project.create")}
         </Button>
       </div>
 
       {error && (
         <Alert
           showIcon
-          action={<Button onClick={() => void load()}>重试</Button>}
-          description={error}
-          title="项目加载失败"
+          action={<Button onClick={() => void load()}>{t("common.retry")}</Button>}
+          description={errorText(error)}
+          title={t("project.failed")}
           type="error"
         />
       )}
       {!error && loading && (
         <div className="page-state is-loading">
           <Spin />
-          <p className="muted">正在读取项目…</p>
+          <p className="muted">{t("project.loading")}</p>
         </div>
       )}
       {!error && !loading && width < 608 && (
-        <section aria-label="项目列表">
+        <section aria-label={t("project.list")}>
           {projects.length ? (
             projects.map(item => (
               <article key={item.id} className="project-card">
                 <h2>{item.name}</h2>
-                <p className="muted">{item.description || "暂无项目说明"}</p>
+                <p className="muted">{item.description || t("project.noDescription")}</p>
                 <p>
                   <Typography.Text code copyable={{ text: item.ak }}>
                     {item.ak.slice(0, 12)}…
@@ -182,7 +190,7 @@ export default function ProjectsPage() {
               </article>
             ))
           ) : (
-            <Empty description="创建第一个项目，让用户的声音抵达这里" />
+            <Empty description={t("project.empty")} />
           )}
         </section>
       )}
@@ -190,7 +198,7 @@ export default function ProjectsPage() {
         <Table
           columns={[
             {
-              title: "项目",
+              title: t("project.label"),
               key: "name",
               render: (_, item) => (
                 <>
@@ -200,19 +208,25 @@ export default function ProjectsPage() {
               ),
             },
             {
-              title: "接入标识 AK",
+              title: t("project.ak"),
               dataIndex: "ak",
+              width: 170,
               render: (value: string) => (
-                <Typography.Text code copyable={{ text: value }}>{`${String(value).slice(0, 12)}…`}</Typography.Text>
+                <Typography.Text
+                  code
+                  className="project-key"
+                  copyable={{ text: value }}
+                >{`${String(value).slice(0, 12)}…`}</Typography.Text>
               ),
             },
             {
-              title: "采集",
+              title: t("project.collection"),
               dataIndex: "enabled",
+              width: 110,
               render: (_, item) => collectionSwitch(item),
             },
             {
-              title: "操作",
+              title: t("common.actions"),
               key: "actions",
               width: 220,
               render: (_, item) => actions(item),
@@ -220,7 +234,7 @@ export default function ProjectsPage() {
           ]}
           dataSource={projects}
           loading={loading}
-          locale={{ emptyText: <Empty description="创建第一个项目，让用户的声音抵达这里" /> }}
+          locale={{ emptyText: <Empty description={t("project.empty")} /> }}
           pagination={false}
           rowKey="id"
           scroll={{ x: 720 }}
@@ -257,41 +271,56 @@ export default function ProjectsPage() {
         className="sdk-integration-modal"
         footer={null}
         open={!!snippet}
-        title={`${snippet?.name ?? ""} · SDK 接入`}
+        title={t("integration.title", { name: snippet?.name ?? "" })}
         width={1180}
         onCancel={() => setSnippet(null)}
       >
-        <p className="sdk-integration-intro">AK 是公开项目标识，不需要用户登录。芸笺等扩展请使用 npm 打包接入。</p>
+        <p className="sdk-integration-intro">{t("integration.intro")}</p>
         <div className="sdk-integration-layout">
           <div className="sdk-integration-options">
             <Space wrap>
-              <span>表单风格</span>
+              <span>{t("integration.style")}</span>
               <Select
                 options={[
-                  { value: "paper", label: "宣纸朱砂" },
-                  { value: "classic", label: "经典简洁" },
-                  { value: "celadon", label: "青瓷竹简" },
-                  { value: "gilded", label: "墨夜鎏金" },
-                  { value: "cyber", label: "霓虹边界" },
-                  { value: "freedom", label: "自由之翼" },
-                  { value: "justice", label: "正义之翼" },
+                  { value: "paper", label: t("style.paper") },
+                  { value: "classic", label: t("style.classic") },
+                  { value: "celadon", label: t("style.celadon") },
+                  { value: "gilded", label: t("style.gilded") },
+                  { value: "cyber", label: t("style.cyber") },
+                  { value: "freedom", label: t("style.freedom") },
+                  { value: "justice", label: t("style.justice") },
                 ]}
                 value={uiStyle}
-                aria-label="表单风格"
+                virtual={false}
+                aria-label={t("integration.style")}
                 onChange={setUiStyle}
               />
             </Space>
-            <p className="muted">选择风格后，预览与接入代码同步更新。</p>
+            <Space wrap>
+              <span>{t("language.form")}</span>
+              <Select
+                options={[
+                  { value: "auto", label: t("language.host") },
+                  { value: "zh-CN", label: "简体中文" },
+                  { value: "en", label: "English" },
+                ]}
+                value={formLocale}
+                virtual={false}
+                aria-label={t("language.form")}
+                onChange={setFormLocale}
+              />
+            </Space>
+            <p className="muted">{t("integration.hint")}</p>
           </div>
           <div className="sdk-integration-code">
             <Tabs
               items={[
                 { key: "npm", label: "npm", children: snippetView(npm) },
-                { key: "script", label: "普通 script", children: snippetView(script) },
+                { key: "script", label: t("integration.script"), children: snippetView(script) },
               ]}
             />
           </div>
-          {snippet && <SdkPreview key={uiStyle} uiStyle={uiStyle} />}
+          {snippet && <SdkPreview key={`${uiStyle}:${formLocale}`} formLocale={formLocale} uiStyle={uiStyle} />}
         </div>
       </Modal>
     </div>

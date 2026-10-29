@@ -6,13 +6,24 @@ import Brand from "./Brand.js";
 import AuthPage from "./features/auth/AuthPage.js";
 import FeedbackPage from "./features/feedback/FeedbackPage.js";
 import ProjectsPage from "./features/projects/ProjectsPage.js";
+import { useI18n } from "./LanguageProvider.js";
+import LanguageSelect from "./LanguageSelect.js";
 
 export default function App() {
+  const { t, errorText } = useI18n();
   const { message } = AntApp.useApp();
   const [session, setSession] = useState<{ username: string | null; setup: boolean }>();
   const [error, setError] = useState("");
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [section, setSection] = useState("feedback");
+  const [compactNavigation, setCompactNavigation] = useState(() => window.matchMedia("(max-width: 1023px)").matches);
+  useEffect(() => {
+    // 语言入口跟随导航实际所在行，只渲染一个可访问的菜单。
+    const media = window.matchMedia("(max-width: 1023px)");
+    const changed = () => setCompactNavigation(media.matches);
+    media.addEventListener("change", changed);
+    return () => media.removeEventListener("change", changed);
+  }, []);
   const load = useCallback(async () => {
     try {
       const [user, setup] = await Promise.all([
@@ -35,22 +46,41 @@ export default function App() {
   }, [load]);
   if (error) {
     return (
-      <Result
-        className="connection-state"
-        extra={<Button onClick={() => void load()}>重试</Button>}
-        status="warning"
-        subTitle={error}
-        title="暂时无法连接回声"
-      />
+      <>
+        <div className="language-toolbar">
+          <LanguageSelect />
+        </div>
+        <Result
+          className="connection-state"
+          extra={<Button onClick={() => void load()}>{t("common.retry")}</Button>}
+          status="warning"
+          subTitle={errorText(error)}
+          title={t("connection.title")}
+        />
+      </>
     );
   }
 
   if (!session) {
-    return <Spin fullscreen description="正在连接回声…" />;
+    return (
+      <>
+        <div className="language-toolbar">
+          <LanguageSelect />
+        </div>
+        <Spin fullscreen description={t("connection.pending")} />
+      </>
+    );
   }
 
   if (!session.username) {
-    return <AuthPage setup={session.setup} onReady={() => void load()} />;
+    return (
+      <>
+        <div className="language-toolbar">
+          <LanguageSelect />
+        </div>
+        <AuthPage setup={session.setup} onReady={() => void load()} />
+      </>
+    );
   }
 
   const logout = async () => {
@@ -58,7 +88,7 @@ export default function App() {
       await api("/auth/logout", "POST");
       await load();
     } catch (error) {
-      void message.error((error as Error).message);
+      void message.error(errorText((error as Error).message));
     }
   };
 
@@ -66,10 +96,10 @@ export default function App() {
     try {
       await api("/auth/password", "PUT", values);
       setPasswordOpen(false);
-      void message.success("密码已更新，请重新登录");
+      void message.success(t("account.updated"));
       await load();
     } catch (error) {
-      void message.error((error as Error).message);
+      void message.error(errorText((error as Error).message));
     }
   };
 
@@ -77,73 +107,91 @@ export default function App() {
     <div className="workspace">
       <aside className="sidebar">
         <Brand />
-        <div className="sidebar-caption">收录心声 · 静候回响</div>
-        <nav aria-label="主导航">
-          <Button
-            type="text"
-            aria-current={section === "feedback" ? "page" : undefined}
-            onClick={() => setSection("feedback")}
-          >
-            反馈收件箱
-          </Button>
-          <Button
-            type="text"
-            aria-current={section === "projects" ? "page" : undefined}
-            onClick={() => setSection("projects")}
-          >
-            项目接入
-          </Button>
-        </nav>
+        <div className="sidebar-caption">{t("nav.caption")}</div>
+        <div className="sidebar-navigation">
+          <nav aria-label={t("nav.label")}>
+            <Button
+              type="text"
+              aria-current={section === "feedback" ? "page" : undefined}
+              onClick={() => setSection("feedback")}
+            >
+              {t("nav.inbox")}
+            </Button>
+            <Button
+              type="text"
+              aria-current={section === "projects" ? "page" : undefined}
+              onClick={() => setSection("projects")}
+            >
+              {t("nav.projects")}
+            </Button>
+          </nav>
+          {compactNavigation && (
+            <div className="sidebar-language">
+              <LanguageSelect />
+            </div>
+          )}
+        </div>
         <div className="sidebar-foot">
-          让每个声音，
+          {t("brand.sideFirst")}
           <br />
-          被听见。
+          {t("brand.sideSecond")}
         </div>
       </aside>
       <div className="workspace-content">
         <header className="topbar">
-          <span className="current-page">{section === "feedback" ? "反馈收件箱" : "项目接入"}</span>
+          <span className="current-page">{section === "feedback" ? t("nav.inbox") : t("nav.projects")}</span>
           <div className="account">
             <span className="muted">{session.username}</span>
             <Button type="text" onClick={() => setPasswordOpen(true)}>
-              修改密码
+              {t("account.password")}
             </Button>
             <Button type="text" onClick={() => void logout()}>
-              退出
+              {t("account.logout")}
             </Button>
           </div>
           <div className="account-mobile">
             <Dropdown
               menu={{
                 items: [
-                  { key: "password", label: "修改密码" },
-                  { key: "logout", label: "退出" },
+                  { key: "password", label: t("account.password") },
+                  { key: "logout", label: t("account.logout") },
                 ],
                 onClick: ({ key }) => (key === "password" ? setPasswordOpen(true) : void logout()),
               }}
               trigger={["click"]}
             >
-              <Button aria-label="账号操作">{session.username} ▾</Button>
+              <Button aria-label={t("account.actions")}>{session.username} ▾</Button>
             </Dropdown>
           </div>
+          {!compactNavigation && (
+            <div className="topbar-language">
+              <LanguageSelect />
+            </div>
+          )}
         </header>
         <main className="workspace-main">{section === "feedback" ? <FeedbackPage /> : <ProjectsPage />}</main>
-        <footer className="workspace-footer">回声 · 让产品与用户，保持对话。</footer>
+        <footer className="workspace-footer">{t("brand.footer")}</footer>
       </div>
-      <Modal destroyOnHidden footer={null} open={passwordOpen} title="修改密码" onCancel={() => setPasswordOpen(false)}>
+      <Modal
+        destroyOnHidden
+        footer={null}
+        open={passwordOpen}
+        title={t("account.password")}
+        onCancel={() => setPasswordOpen(false)}
+      >
         <Form<Record<string, string>> layout="vertical" onFinish={values => void changePassword(values)}>
-          <Form.Item label="当前密码" name="currentPassword" rules={[{ required: true }]}>
+          <Form.Item label={t("account.current")} name="currentPassword" rules={[{ required: true }]}>
             <Input.Password autoComplete="current-password" />
           </Form.Item>
           <Form.Item
-            label="新密码"
+            label={t("account.new")}
             name="newPassword"
-            rules={[{ required: true, min: 12, message: "至少 12 位，包含字母和数字" }]}
+            rules={[{ required: true, min: 12, message: t("account.rule") }]}
           >
             <Input.Password autoComplete="new-password" />
           </Form.Item>
           <Button htmlType="submit" type="primary">
-            更新密码
+            {t("account.update")}
           </Button>
         </Form>
       </Modal>

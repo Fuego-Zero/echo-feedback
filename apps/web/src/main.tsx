@@ -1,15 +1,14 @@
-import { App as AntApp, ConfigProvider } from "antd";
-import zhCN from "antd/locale/zh_CN";
+import { App as AntApp } from "antd";
 import { createRoot } from "react-dom/client";
 
 import App from "./App.js";
-import { theme } from "./theme.js";
+import LanguageProvider from "./LanguageProvider.js";
 import "./style.css";
 
 createRoot(document.getElementById("root")!).render(
-  <ConfigProvider locale={zhCN} theme={theme}>
+  <LanguageProvider>
     <AntApp>
       <App />
     </AntApp>
-  </ConfigProvider>
+  </LanguageProvider>
 );

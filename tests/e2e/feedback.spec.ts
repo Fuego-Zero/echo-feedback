@@ -207,6 +207,13 @@ test("后台创建、编辑、停用与接入示例", async ({ page }) => {
   await page.getByRole("button", { name: "项目接入" }).click();
   await page.getByRole("button", { name: "创建项目" }).click();
   await page.getByLabel("项目名称").fill("界面项目验收");
+  await page.getByLabel("允许的网页来源").fill("invalid-origin");
+  await page.getByRole("button", { name: "保存项目" }).click();
+  await expect(page.locator(".ant-form-item-explain-error")).toHaveText(
+    "请填写完整 Origin，例如 https://app.example.com"
+  );
+  await expect(page.locator(".ant-message-notice")).toHaveCount(0);
+  await page.getByLabel("允许的网页来源").fill("");
   await page.getByRole("button", { name: "保存项目" }).click();
   const row = page.getByRole("row").filter({ hasText: "界面项目验收" });
   await row.getByRole("switch").click();
@@ -218,10 +225,28 @@ test("后台创建、编辑、停用与接入示例", async ({ page }) => {
   await row.getByRole("button", { name: /接\s*入/ }).click();
   await expect(page.locator(".code-block")).toContainText("@echo-feedback/sdk");
   await page.getByRole("tab", { name: "普通 script" }).click();
-  await expect(page.locator(".code-block").last()).toContainText("/sdk/0.1.0/");
+  await expect(page.locator(".code-block").last()).toContainText("/sdk/0.2.0/");
   await page.keyboard.press("Escape");
   await row.getByRole("button", { name: /删\s*除/ }).click();
   await expect(row).toHaveCount(0);
+});
+
+test("新版脚本与旧地址兼容，品牌图标返回正确 MIME", async ({ request }) => {
+  const current = await request.get(`${service}/sdk/0.2.0/echo-feedback.iife.js`);
+  const legacy = await request.get(`${service}/sdk/0.1.0/echo-feedback.iife.js`);
+  expect(current.ok()).toBeTruthy();
+  expect(legacy.ok()).toBeTruthy();
+  expect(await legacy.text()).toBe(await current.text());
+  for (const [path, mime] of [
+    ["favicon.svg", "image/svg+xml"],
+    ["favicon-32.png", "image/png"],
+    ["favicon.ico", "image/vnd.microsoft.icon"],
+    ["apple-touch-icon.png", "image/png"],
+  ]) {
+    const response = await request.get(`${service}/${path}`);
+    expect(response.ok()).toBeTruthy();
+    expect(response.headers()["content-type"]).toBe(mime);
+  }
 });
 
 test("ESM 接入与在途销毁不影响宿主", async ({ page }) => {
@@ -232,7 +257,7 @@ test("ESM 接入与在途销毁不影响宿主", async ({ page }) => {
     async ({ ak, serverUrl }) => {
       const win = window as unknown as { feedback: { destroy(): void; open(): void } };
       win.feedback.destroy();
-      const url = `${serverUrl}/sdk/0.1.0/echo-feedback.js`;
+      const url = `${serverUrl}/sdk/0.2.0/echo-feedback.js`;
       const sdk = (await import(url)) as {
         init(options: { serverUrl: string; ak: string; nonce: string; showTrigger: boolean }): typeof win.feedback;
       };
