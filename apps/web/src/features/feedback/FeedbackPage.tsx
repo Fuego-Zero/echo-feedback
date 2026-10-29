@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "../../api/client.js";
 import ListPagination from "../../ListPagination.js";
-import { useElementWidth } from "../../useElementWidth.js";
 import FeedbackDetail from "./FeedbackDetail.js";
 import { feedbackLabels as statusLabels } from "./feedbackLabels.js";
 
@@ -21,8 +20,6 @@ export default function FeedbackPage() {
   const [error, setError] = useState("");
   const requestId = useRef(0);
   const lastTrigger = useRef<HTMLElement | null>(null);
-  const { ref, width } = useElementWidth();
-  const wide = width >= 960;
   const load = useCallback(async () => {
     requestId.current += 1;
     const { current } = requestId;
@@ -94,16 +91,14 @@ export default function FeedbackPage() {
       key={`${selected.id}:${selected.status}:${selected.note}`}
       feedback={selected}
       onSaved={() => {
-        if (!wide) {
-          close();
-        }
+        close();
 
         void load();
       }}
     />
   );
   return (
-    <div ref={ref}>
+    <div>
       <div className="page-heading">
         <div>
           <div className="eyebrow">回声 / INBOX</div>
@@ -160,7 +155,7 @@ export default function FeedbackPage() {
         </div>
       </div>
 
-      <div className={`feedback-layout${wide ? " is-wide" : ""}`}>
+      <div className="feedback-layout">
         <section className="feedback-list" aria-busy={loading} aria-label="反馈列表">
           {error && (
             <Alert
@@ -219,24 +214,6 @@ export default function FeedbackPage() {
               </Button>
             ))}
         </section>
-        {wide &&
-          (selected ? (
-            <section className="feedback-detail" aria-label="反馈详情">
-              <div className="detail-heading">
-                <h2>反馈详情</h2>
-                <Button type="text" onClick={close}>
-                  关闭详情
-                </Button>
-              </div>
-              {detail}
-            </section>
-          ) : (
-            <div className="detail-placeholder">
-              <div className="eyebrow">一纸心声 · 皆有回响</div>
-              <p>选择一条反馈查看详情</p>
-              <span className="muted">阅读建议，记录产品的下一步。</span>
-            </div>
-          ))}
       </div>
       {!error && (
         <ListPagination
@@ -251,21 +228,19 @@ export default function FeedbackPage() {
           }}
         />
       )}
-      {!wide && (
-        <Drawer
-          afterOpenChange={open => {
-            if (!open) {
-              lastTrigger.current?.focus({ preventScroll: true });
-            }
-          }}
-          open={!!selected}
-          styles={{ wrapper: { width: "min(620px, 100vw)" } }}
-          title="反馈详情"
-          onClose={close}
-        >
-          {detail}
-        </Drawer>
-      )}
+      <Drawer
+        afterOpenChange={open => {
+          if (!open) {
+            lastTrigger.current?.focus({ preventScroll: true });
+          }
+        }}
+        open={!!selected}
+        styles={{ wrapper: { width: "min(620px, 100vw)" } }}
+        title="反馈详情"
+        onClose={close}
+      >
+        {detail}
+      </Drawer>
     </div>
   );
 }

@@ -62,14 +62,14 @@ async function noOverflow(page: Page) {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 }
 
-test("分栏选择、筛选和分页清空、保存移出筛选、失败保留备注", async ({ page }) => {
+test("抽屉选择、筛选分页、保存移出筛选、失败保留备注", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await enter(page);
-  await expect(page.getByText("选择一条反馈查看详情")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
   const first = page.locator(".feedback-card").first();
   await first.focus();
   await first.press("Enter");
-  await expect(page.getByRole("region", { name: "反馈详情" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toBeVisible();
   await page.getByLabel("内部处理备注").fill("仅内部可见的处理记录");
   await page.route("**/api/admin/feedback/*", route =>
     route.request().method() === "PATCH"
@@ -86,34 +86,41 @@ test("分栏选择、筛选和分页清空、保存移出筛选、失败保留�
   await page.unroute("**/api/admin/feedback/*");
   await page.getByRole("button", { name: "保存处理记录" }).click();
   await expect(page.getByText("处理记录已保存")).toBeVisible();
-  await expect(page.getByLabel("内部处理备注")).toHaveValue("仅内部可见的处理记录");
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
   await page.getByRole("button", { name: "刷新反馈" }).click();
-  await expect(page.getByRole("region", { name: "反馈详情" })).toBeVisible();
-  await page.locator(".feedback-detail").evaluate(element => {
+  await first.click();
+  await expect(page.getByLabel("内部处理备注")).toHaveValue("仅内部可见的处理记录");
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toBeVisible();
+  await page.locator(".ant-drawer-body").evaluate(element => {
     element.scrollTop = 0;
   });
   await expect(page.locator(".ant-message-notice")).toHaveCount(0);
   await page.screenshot({ path: `${screenshots}/book-inbox-1440.png`, fullPage: true });
+  await page.keyboard.press("Escape");
   await page.locator('.ant-pagination-item[title="2"]').click();
-  await expect(page.getByText("选择一条反馈查看详情")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
   await expect(page.locator(".feedback-card")).toHaveCount(2);
-  await page.locator(".feedback-card").first().click();
   await page.getByRole("group", { name: "筛选状态" }).getByRole("button", { name: "待处理", exact: true }).click();
-  await expect(page.getByText("选择一条反馈查看详情")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
   await page.locator(".feedback-card").first().click();
   const selectedName = await page.locator('.feedback-card[aria-pressed="true"]').getAttribute("aria-label");
   await page.getByLabel("处理状态", { exact: true }).click();
   await page.getByText("已解决", { exact: true }).last().click();
   await page.getByRole("button", { name: "保存处理记录" }).click();
-  await expect(page.getByText("选择一条反馈查看详情")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: selectedName!, exact: true })).toHaveCount(0);
   await noOverflow(page);
 });
 
 test("响应式抽屉、焦点返回、项目卡片与弹窗", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1920, height: 944 });
   await enter(page);
   await page.locator(".feedback-card").first().click();
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflowY)).toBe("hidden");
+  await page.getByRole("button", { name: "保存处理记录" }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole("button", { name: "保存处理记录" })).toBeInViewport();
+  await page.screenshot({ path: `${screenshots}/book-detail-1080p.png` });
   await page.setViewportSize({ width: 1024, height: 768 });
   await expect(page.getByRole("dialog", { name: "反馈详情" })).toBeVisible();
   await page.screenshot({ path: `${screenshots}/book-detail-1024.png` });
@@ -167,7 +174,7 @@ test("响应式抽屉、焦点返回、项目卡片与弹窗", async ({ page }) 
   await page.screenshot({ path: `${screenshots}/book-project-editor.png` });
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "反馈收件箱" }).click();
-  await expect(page.getByText("选择一条反馈查看详情")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "反馈详情" })).toHaveCount(0);
 });
 
 test("列表失败与空状态分离，初始化和登录视觉", async ({ page }) => {
