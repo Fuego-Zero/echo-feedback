@@ -7,6 +7,7 @@ it("SSR 导入和无 DOM 初始化不会访问宿主或抛错", () => {
   expect(() => {
     const instance = init({ serverUrl: "https://feedback.example.com", ak: "a".repeat(43) });
     instance.open();
+    instance.setLocale("en");
     instance.destroy();
     instance.destroy();
   }).not.toThrow();

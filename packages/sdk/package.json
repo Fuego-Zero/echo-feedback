@@ -1,11 +1,12 @@
 {
   "name": "@echo-feedback/sdk",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "description": "回声：框架无关的匿名反馈面板",
   "files": [
     "dist",
     "README.md",
+    "README.en.md",
     "LICENSE"
   ],
   "main": "./dist/echo-feedback.js",

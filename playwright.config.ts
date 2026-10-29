@@ -6,7 +6,12 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: [["list"], ["html", { outputFolder: ".tmp/playwright/report", open: "never" }]],
-  use: { baseURL: "http://127.0.0.1:18730", trace: "retain-on-failure", screenshot: "only-on-failure" },
+  use: {
+    baseURL: "http://127.0.0.1:18730",
+    locale: "zh-CN",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+  },
   webServer: {
     command: "pnpm exec tsx tests/e2e/server.ts",
     url: "http://127.0.0.1:18730/api/health/ready",

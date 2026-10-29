@@ -66,9 +66,6 @@
   letter-spacing: 0;
   font-weight: 750;
 }
-:host([data-ui-family="futuristic"]) .eyebrow::before {
-  content: none;
-}
 :host([data-ui-family="futuristic"]) .eyebrow {
   width: fit-content;
   max-width: 100%;

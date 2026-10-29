@@ -40,9 +40,6 @@
 :host([data-ui-style="classic"]) header {
   border-top: 0;
 }
-:host([data-ui-style="classic"]) .eyebrow::before {
-  content: none;
-}
 :host([data-ui-style="classic"]) h2 {
   font-family: inherit;
 }
