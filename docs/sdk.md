@@ -80,3 +80,9 @@ document.querySelector("#feedback-button")?.addEventListener("click", () => {
 样式继续封装在 Shadow DOM 内；使用系统字体和内联装饰，不新增字体或装饰图片网络请求。升级 SDK 构建产物会改变默认外观，宿主应重新检查明暗主题、输入焦点和移动端布局。
 
 旧版 `uiStyle: "orbital"` 兼容映射到 `justice`（正义之翼）；新接入请使用 `justice`。
+
+## 项目启停与删除
+
+项目列表的「采集」列使用开关直接启停；停用后拒绝新反馈，已有反馈仍可查阅。删除按钮直接执行逻辑删除：从项目管理和接入选项中隐藏，原 AK 不再接受提交；项目、历史反馈和图片均保留，不提供界面恢复入口。
+
+管理员接口 `DELETE /api/admin/projects/:id` 返回 `{ deleted: true }`。删除操作沿用登录和来源校验。数据库通过新增迁移记录 `deleted_at`；现有项目不受影响。

@@ -209,8 +209,7 @@ test("后台创建、编辑、停用与接入示例", async ({ page }) => {
   await page.getByLabel("项目名称").fill("界面项目验收");
   await page.getByRole("button", { name: "保存项目" }).click();
   const row = page.getByRole("row").filter({ hasText: "界面项目验收" });
-  await row.getByRole("button", { name: /停\s*用/ }).click();
-  await page.getByRole("button", { name: /确\s*认/ }).click();
+  await row.getByRole("switch").click();
   await expect(row.getByText("已停用", { exact: true })).toBeVisible();
   await row.getByRole("button", { name: /编\s*辑/ }).click();
   await page.getByLabel("项目说明").fill("编辑停用项目不能重新开启采集");
@@ -220,6 +219,9 @@ test("后台创建、编辑、停用与接入示例", async ({ page }) => {
   await expect(page.locator(".code-block")).toContainText("@echo-feedback/sdk");
   await page.getByRole("tab", { name: "普通 script" }).click();
   await expect(page.locator(".code-block").last()).toContainText("/sdk/0.1.0/");
+  await page.keyboard.press("Escape");
+  await row.getByRole("button", { name: /删\s*除/ }).click();
+  await expect(row).toHaveCount(0);
 });
 
 test("ESM 接入与在途销毁不影响宿主", async ({ page }) => {

@@ -1,5 +1,5 @@
 import { type Page, type Project } from "@echo-feedback/contracts";
-import { Alert, App, Button, Empty, Modal, Popconfirm, Select, Space, Spin, Table, Tabs, Tag, Typography } from "antd";
+import { Alert, App, Button, Empty, Modal, Select, Space, Spin, Switch, Table, Tabs, Typography } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "../../api/client.js";
@@ -17,6 +17,7 @@ export default function ProjectsPage() {
   const requestId = useRef(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState<string[]>([]);
   const { ref, width } = useElementWidth();
   const [editor, setEditor] = useState<Project | "new" | null>(null);
   const [snippet, setSnippet] = useState<Project | null>(null);
@@ -61,6 +62,7 @@ export default function ProjectsPage() {
     };
   }, [load]);
   const toggle = async (project: Project) => {
+    setBusy(value => [...value, project.id]);
     const { name, description, allowedOrigins, allowExtensionClients } = project;
     try {
       await api(`/admin/projects/${project.id}`, "PATCH", {
@@ -74,8 +76,34 @@ export default function ProjectsPage() {
       await load();
     } catch (error) {
       void message.error((error as Error).message);
+    } finally {
+      setBusy(value => value.filter(id => id !== project.id));
     }
   };
+
+  const remove = async (project: Project) => {
+    setBusy(value => [...value, project.id]);
+    try {
+      await api(`/admin/projects/${project.id}`, "DELETE");
+      void message.success("项目已删除，历史反馈仍保留");
+      await load();
+    } catch (error) {
+      void message.error((error as Error).message);
+    } finally {
+      setBusy(value => value.filter(id => id !== project.id));
+    }
+  };
+
+  const collectionSwitch = (item: Project) => (
+    <Switch
+      checked={item.enabled}
+      checkedChildren="已启用"
+      loading={busy.includes(item.id)}
+      unCheckedChildren="已停用"
+      aria-label={`${item.name}采集`}
+      onChange={() => void toggle(item)}
+    />
+  );
 
   const actions = (item: Project) => (
     <Space>
@@ -85,17 +113,9 @@ export default function ProjectsPage() {
       <Button type="link" onClick={() => setSnippet(item)}>
         接入
       </Button>
-      <Popconfirm
-        cancelText="取消"
-        description="停用后拒绝新提交，已有反馈仍保留。"
-        okText="确认"
-        title={item.enabled ? "停用采集？" : "启用采集？"}
-        onConfirm={() => {
-          void toggle(item);
-        }}
-      >
-        <Button type="link">{item.enabled ? "停用" : "启用"}</Button>
-      </Popconfirm>
+      <Button danger disabled={busy.includes(item.id)} type="link" onClick={() => void remove(item)}>
+        删除
+      </Button>
     </Space>
   );
   const options = snippet
@@ -157,7 +177,7 @@ export default function ProjectsPage() {
                     {item.ak.slice(0, 12)}…
                   </Typography.Text>
                 </p>
-                <Tag color={item.enabled ? "success" : "default"}>{item.enabled ? "已启用" : "已停用"}</Tag>
+                {collectionSwitch(item)}
                 <div className="project-actions">{actions(item)}</div>
               </article>
             ))
@@ -189,7 +209,7 @@ export default function ProjectsPage() {
             {
               title: "采集",
               dataIndex: "enabled",
-              render: value => <Tag color={value ? "success" : "default"}>{value ? "已启用" : "已停用"}</Tag>,
+              render: (_, item) => collectionSwitch(item),
             },
             {
               title: "操作",
@@ -234,6 +254,7 @@ export default function ProjectsPage() {
       )}
       <Modal
         destroyOnHidden
+        className="sdk-integration-modal"
         footer={null}
         open={!!snippet}
         title={`${snippet?.name ?? ""} · SDK 接入`}

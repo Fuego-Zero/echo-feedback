@@ -1,7 +1,11 @@
 import { useMemo, useRef } from "react";
 
+import { useElementWidth } from "../../useElementWidth.js";
+
 export default function SdkPreview({ uiStyle }: { uiStyle: string }) {
   const previewRef = useRef<HTMLElement>(null);
+  const { ref, width } = useElementWidth();
+  const scale = Math.min(1, width / 460);
   const source = useMemo(() => {
     const nonce = document.querySelector<HTMLScriptElement>("script[nonce]")?.nonce ?? "";
     const options = JSON.stringify({
@@ -25,6 +29,10 @@ if(!window.EchoFeedback){message.textContent='预览加载失败，请重新打�
 else {
   const feedback=EchoFeedback.init(${options});
   const shadow=document.querySelector('echo-feedback').shadowRoot;
+  // 预览按自然内容高度排版，避免移动端全屏布局把提交区推到画布之外。
+  const style=document.createElement('style');
+  style.textContent='dialog{position:relative!important;inset:auto!important;margin:0!important;height:auto!important;max-height:none!important;width:460px!important}.layout{height:auto!important;max-height:none!important}.body{overflow:visible!important;flex:none!important}dialog::backdrop{background:transparent!important;backdrop-filter:none!important}';
+  shadow.append(style);
   shadow.querySelector('form').addEventListener('submit',event=>{event.preventDefault();event.stopImmediatePropagation();},true);
   message.hidden=true;
   feedback.open();
@@ -36,22 +44,27 @@ else {
     <section ref={previewRef} className="sdk-preview" aria-label="表单风格预览">
       <h3>表单预览</h3>
       <p className="muted">明亮模式 · 仅展示外观，不可交互</p>
-      <iframe
-        key={uiStyle}
-        inert
-        sandbox="allow-scripts"
-        srcDoc={source}
-        tabIndex={-1}
-        title="SDK 表单风格预览"
-        aria-hidden="true"
-        onLoad={() => {
-          // 隔离 SDK 自动聚焦行为，键盘操作始终留在接入弹窗。
-          previewRef.current
-            ?.closest(".ant-modal")
-            ?.querySelector<HTMLElement>('[aria-label="表单风格"]')
-            ?.focus({ preventScroll: true });
-        }}
-      />
+      <div ref={ref} className="sdk-preview-stage">
+        <div className="sdk-preview-fit" style={{ width: 460 * scale, height: 800 * scale }}>
+          <iframe
+            key={uiStyle}
+            inert
+            sandbox="allow-scripts"
+            srcDoc={source}
+            style={{ transform: `scale(${scale})` }}
+            tabIndex={-1}
+            title="SDK 表单风格预览"
+            aria-hidden="true"
+            onLoad={() => {
+              // 隔离 SDK 自动聚焦行为，键盘操作始终留在接入弹窗。
+              previewRef.current
+                ?.closest(".ant-modal")
+                ?.querySelector<HTMLElement>('[aria-label="表单风格"]')
+                ?.focus({ preventScroll: true });
+            }}
+          />
+        </div>
+      </div>
     </section>
   );
 }
