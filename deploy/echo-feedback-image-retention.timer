@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Echo Feedback image retention every five minutes
+
+[Timer]
+OnBootSec=5min
+OnCalendar=*:4/5
+AccuracySec=30s
+Unit=echo-feedback-image-retention.service
+
+[Install]
+WantedBy=timers.target

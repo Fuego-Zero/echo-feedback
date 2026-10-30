@@ -97,3 +97,26 @@ Actions 构建推送使用内置 GITHUB_TOKEN 的 packages:write 权限；部署
 手动在 main 运行 Release image，image_sha 填目标版本对应的 40 位源码 SHA。工作流从该提交读取 package.json 的 version 和 Compose，仅部署对应已有版本镜像，不重新构建；SHA 用于定位源码，不作为镜像标签。仅当数据库兼容时直接这样回滚。若迁移不兼容，先停服务，将当前 data 留存，再从选定备份 data.tar.gz 恢复数据库及附件，恢复相应 .env/Compose 与权限，再启动旧镜像。旧流程发布的 SHA 镜像不适用新版自动回滚；需要使用相应备份的 .env/Compose 手动恢复。备份目录不自动清理，应制定保留周期。
 
 本流程不生成 GitHub Release 或 npm 包，不创建 latest 标签。服务镜像统一使用根目录 package.json 的版本号，发布前需确保版本号唯一；手动发布权限应限制在可信维护者范围内。
+
+## DC6 镜像自动保留
+
+回声使用独立的 `echo-feedback-image-retention.timer`，每 5 分钟检查一次，与其他服务错开执行。脚本源码为 `scripts/echoImageRetention.py`，服务器安装路径为 `/usr/local/sbin/echo-feedback-image-retention.py`；对应 service、timer 源文件位于 `deploy/`，安装到 `/etc/systemd/system/`。任务不依赖服务器上的源码仓库或临时目录，兼容 DC6 的 Python 2.7。
+
+仅管理 `ghcr.io/fuego-zero/echo-feedback` 和 `echo-feedback` 两个镜像仓库，支持既有 SHA 标签与正式版本标签。回声容器必须属于 `echo-feedback` Compose 项目、部署目录必须是 `/data/echo-feedback`，并健康运行至少 5 分钟。保留当前镜像及状态记录中的上一成功镜像；回滚时也保留刚离开的成功镜像。所有容器（含停止的容器）引用的镜像、带其他仓库标签或摘要的镜像、可能正在部署的新镜像都会受到保护。
+
+任务与部署脚本共用 `/data/echo-feedback/.deploy.lock`，并持有自己的清理锁。删除前逐一重新检查容器和镜像引用，只执行限定标签的 `docker image rm --no-prune`，不强制删除、不做全局 prune、不删除容器、卷、数据库、附件或备份。
+
+首次安装需从成功部署记录及备份确认上一成功版本，创建权限 700 的 `/var/lib/echo-feedback-image-retention`，将当前和上一成功镜像的完整镜像 ID 写入权限 600 的 `state.json`，格式为 `{"schema":1,"current":"sha256:当前镜像ID","rollback":"sha256:上一成功镜像ID"}`。不根据构建时间猜测成功版本，缺少可信状态时跳过清理。状态目录应保留，不随应用发布替换。
+
+安装后先预览，再启动清理和定时任务：
+
+```sh
+python -B /usr/local/sbin/echo-feedback-image-retention.py
+systemctl daemon-reload
+systemctl start echo-feedback-image-retention.service
+systemctl enable --now echo-feedback-image-retention.timer
+systemctl list-timers echo-feedback-image-retention.timer
+journalctl -u echo-feedback-image-retention.service -n 30 --no-pager
+```
+
+相同部署完成清理后重复执行会跳过，避免持续扫描。规则测试在仓库根目录执行 `python -B tests/deploy/imageRetentionTest.py`。本任务只清理 DC6 本地镜像，不删除 GHCR 的镜像版本。
