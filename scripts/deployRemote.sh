@@ -10,7 +10,7 @@ upload="${4:?}"
 [[ ! "$deploy_path" =~ (^|/)\.\.?(/|$) ]]
 [[ "$deploy_path" == */echo-feedback ]]
 [[ "$project" == echo-feedback ]]
-[[ "$image" =~ ^ghcr\.io/fuego-zero/echo-feedback:sha-[0-9a-f]{40}$ ]]
+[[ "$image" =~ ^ghcr\.io/fuego-zero/echo-feedback:(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
 [[ "$upload" == /* && "$upload" =~ /echo-deploy\.[A-Za-z0-9]{8}$ ]]
 cd "$deploy_path"
 for entry in .env compose.yml data backups; do
@@ -29,6 +29,9 @@ if [[ -f compose.yml ]]; then
 fi
 # 拉取失败不停止服务、不更换配置。
 docker pull "$image"
+# 为已拉取的版本镜像添加本地同版本标签，容器列表保持简洁。
+local_image="echo-feedback:${image##*:}"
+docker tag "$image" "$local_image"
 mkdir -p data backups
 chown 1000:1000 data
 chmod 700 data backups
@@ -62,12 +65,12 @@ tar -czf "$backup/data.tar.gz" data
 printf '%s\n' "$image" > "$backup/target-image"
 # 持久镜像引用，使服务器重启后仍使用相同版本。
 awk '!/^[[:space:]]*ECHO_IMAGE[[:space:]]*=/' .env > .env.next
-printf 'ECHO_IMAGE=%s\n' "$image" >> .env.next
+printf 'ECHO_IMAGE=%s\n' "$local_image" >> .env.next
 cp "$upload/compose.yml" compose.yml.next
 mv .env.next .env
 mv compose.yml.next compose.yml
 activated=true
-if ! docker compose up -d --wait --wait-timeout 180; then
+if ! docker compose up -d --pull never --wait --wait-timeout 180; then
   docker compose stop echo || true
   exit 1
 fi
