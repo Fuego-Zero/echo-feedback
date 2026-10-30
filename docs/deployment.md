@@ -10,7 +10,7 @@
 
 ## Docker Compose
 
-把 deploy/compose.yml、以 .env.example 为基础编辑的 .env 放入独立部署目录。在 .env 中增加 ECHO_IMAGE=ghcr.io/owner/echo-feedback:sha-完整提交SHA，设置 WEB_ORIGIN、初始化密钥和可信代理。首次创建 data 并交给 UID/GID 1000，权限 700。不要使用岁时记数据目录。
+把 deploy/compose.yml、以 .env.example 为基础编辑的 .env 放入独立部署目录。在 .env 中增加 ECHO_IMAGE=ghcr.io/fuego-zero/echo-feedback:0.1.0（替换为已发布版本），设置 WEB_ORIGIN、初始化密钥和可信代理。首次创建 data 并交给 UID/GID 1000，权限 700。不要使用岁时记数据目录。
 
 ```sh
 mkdir -p data backups
@@ -22,9 +22,15 @@ docker compose up -d --wait --wait-timeout 90
 
 镜像使用非 root、只读根目录、独立 ./data:/data、最小权限和健康检查。单容器单进程启动 Web/API，迁移成功后才接流量。/api/health/live 检查存活，/api/health/ready 检查数据库和存储可写。
 
+服务镜像版本来自根目录 `package.json` 的 `version`，使用 `主版本.次版本.修订号`，例如 `0.1.0`。每次发布新服务版本前更新该字段，避免覆盖已有版本。SDK 在 `packages/sdk/package.json` 中独立管理版本。
+
+自动部署从 GHCR 拉取 `ghcr.io/fuego-zero/echo-feedback:0.1.0` 后，将同一镜像添加为本地 `echo-feedback:0.1.0` 标签并写入 `.env` 的 ECHO_IMAGE，使 `docker ps` 的 IMAGE 列保持简洁。服务器 `.deployed-image` 和备份的 `target-image` 保留完整 GHCR 版本引用。
+
+如果 `.env` 中已使用本地版本标签，日常重启使用 `docker compose up -d --pull never --wait --wait-timeout 90`。本地标签不能直接 `docker compose pull`；换机或手动升级时，先从 GHCR 拉取目标版本并以 `docker tag` 添加相应本地版本标签，或按上面的方式将 ECHO_IMAGE 改为完整 GHCR 引用后拉取。
+
 Nginx 示例在 deploy/nginx.conf.example，替换域名、证书并执行 nginx -t。镜像包含服务端 TypeScript 和 tsx。生产输出在 apps/web/dist 和 packages/sdk/dist。
 
-GitHub Verify 验证 push 与 PR；Release image 在同仓库 PR 合入 main 后验证、发布 GHCR SHA 镜像并通过 SSH 部署 DC6。详见下方自动发布配置。Compose 使用 --wait 等待就绪。
+GitHub Verify 验证 push 与 PR；Release image 在同仓库 PR 合入 main 后验证、发布 GHCR 版本镜像并通过 SSH 部署 DC6。详见下方自动发布配置。Compose 使用 --wait 等待就绪。
 
 ## 备份、升级、回滚
 
@@ -35,7 +41,7 @@ GitHub Verify 验证 push 与 PR；Release image 在同仓库 PR 合入 main 后
 ```sh
 docker compose stop echo
 tar -czf backups/echo-before-upgrade.tar.gz data
-# 修改 .env 的 ECHO_IMAGE 为目标 SHA，然后：
+# 修改 .env 的 ECHO_IMAGE 为目标版本的完整 GHCR 引用，然后：
 docker compose pull
 docker compose up -d --wait --wait-timeout 90
 ```
@@ -52,12 +58,12 @@ docker compose up -d --wait --wait-timeout 90
 
 1. 同仓库功能分支的 PR 合入 main（推荐 Merge commit 或 Squash and merge）触发 Release image。关闭但未合并、直接 push、fork PR 不触发部署。
 2. 检出准确的 merge_commit_sha，执行 pnpm verify，构建 linux/amd64 镜像。
-3. 对该镜像运行 tests/deploy/docker-smoke.mjs，验证启动、图片权限、重建以及数据库和附件备份恢复。通过后将同一镜像推送为 `ghcr.io/fuego-zero/echo-feedback:sha-<40位SHA>`，不重新构建。
-4. SSH 连接 DC6，严格核对主机密钥。使用一次性 Docker 登录目录拉取镜像，不改变服务器其他项目的 GHCR 登录状态。
-5. 拉取成功后停止回声写入，将整个 data 目录及旧 Compose、旧 .env 保存到 backups/release-时间-随机值；备份失败恢复旧服务，拉取失败不停止服务。
-6. 更新回声专用 Compose 与 .env 中的 ECHO_IMAGE，等待容器就绪，再检查公网 `/api/health/ready`。
+3. 对该镜像运行 tests/deploy/docker-smoke.mjs，验证启动、图片权限、重建以及数据库和附件备份恢复。通过后读取根目录 package.json 的 version，将同一镜像推送为 `ghcr.io/fuego-zero/echo-feedback:<版本号>`，不重新构建，不使用 SHA 标签。
+4. SSH 连接 DC6，严格核对主机密钥。使用一次性 Docker 登录目录拉取镜像，并添加本地 `echo-feedback:<版本号>` 标签，不改变服务器其他项目的 GHCR 登录状态。
+5. 拉取和添加标签成功后停止回声写入，将整个 data 目录及旧 Compose、旧 .env 保存到 backups/release-时间-随机值；备份失败恢复旧服务，拉取或添加标签失败不停止服务。
+6. 更新回声专用 Compose 与 .env 中的 ECHO_IMAGE 为本地版本标签；使用 `--pull never` 从本地镜像启动，等待容器就绪，再检查公网 `/api/health/ready`。完整 GHCR 引用继续保存在部署记录和备份中。
 
-工作流串行执行且不取消正在部署的任务；部署前若发现 main 已更新，旧任务只保留 SHA 镜像、不再部署。服务器还有 flock 部署锁。不克隆仓库、不修改岁时记、不自动覆盖 Nginx、不自动发布 npm SDK。
+工作流串行执行且不取消正在部署的任务；部署前若发现 main 已更新，旧任务只保留版本镜像、不再部署。服务器还有 flock 部署锁。不克隆仓库、不修改岁时记、不自动覆盖 Nginx、不自动发布 npm SDK。
 
 ### GitHub Actions Secrets
 
@@ -88,6 +94,29 @@ Actions 构建推送使用内置 GITHUB_TOKEN 的 packages:write 权限；部署
 
 部署脚本只在镜像拉取、成套备份成功后切换。新容器不能就绪时停止失败服务并保留备份，不擅自把旧程序运行在已经迁移的数据上；公网检查失败也会标记任务失败，但不会因此改动 Nginx 或回滚数据库。
 
-手动在 main 运行 Release image，image_sha 填已发布的 40 位 SHA；仅部署对应已有镜像，不重新构建，使用目标版本 Compose。仅当数据库兼容时直接这样回滚。若迁移不兼容，先停服务，将当前 data 留存，再从选定备份 data.tar.gz 恢复数据库及附件，恢复相应 .env/Compose 与权限，再启动旧镜像。备份目录不自动清理，应制定保留周期。
+手动在 main 运行 Release image，image_sha 填目标版本对应的 40 位源码 SHA。工作流从该提交读取 package.json 的 version 和 Compose，仅部署对应已有版本镜像，不重新构建；SHA 用于定位源码，不作为镜像标签。仅当数据库兼容时直接这样回滚。若迁移不兼容，先停服务，将当前 data 留存，再从选定备份 data.tar.gz 恢复数据库及附件，恢复相应 .env/Compose 与权限，再启动旧镜像。旧流程发布的 SHA 镜像不适用新版自动回滚；需要使用相应备份的 .env/Compose 手动恢复。备份目录不自动清理，应制定保留周期。
 
-本流程不生成 GitHub Release 或 npm 包，不创建 latest 或可覆盖的版本号标签；部署始终锁定提交 SHA。
+本流程不生成 GitHub Release 或 npm 包，不创建 latest 标签。服务镜像统一使用根目录 package.json 的版本号，发布前需确保版本号唯一；手动发布权限应限制在可信维护者范围内。
+
+## DC6 镜像自动保留
+
+回声使用独立的 `echo-feedback-image-retention.timer`，每 5 分钟检查一次，与其他服务错开执行。脚本源码为 `scripts/echoImageRetention.py`，服务器安装路径为 `/usr/local/sbin/echo-feedback-image-retention.py`；对应 service、timer 源文件位于 `deploy/`，安装到 `/etc/systemd/system/`。任务不依赖服务器上的源码仓库或临时目录，兼容 DC6 的 Python 2.7。
+
+仅管理 `ghcr.io/fuego-zero/echo-feedback` 和 `echo-feedback` 两个镜像仓库，支持既有 SHA 标签与正式版本标签。回声容器必须属于 `echo-feedback` Compose 项目、部署目录必须是 `/data/echo-feedback`，并健康运行至少 5 分钟。保留当前镜像及状态记录中的上一成功镜像；回滚时也保留刚离开的成功镜像。所有容器（含停止的容器）引用的镜像、带其他仓库标签或摘要的镜像、可能正在部署的新镜像都会受到保护。
+
+任务与部署脚本共用 `/data/echo-feedback/.deploy.lock`，并持有自己的清理锁。删除前逐一重新检查容器和镜像引用，只执行限定标签的 `docker image rm --no-prune`，不强制删除、不做全局 prune、不删除容器、卷、数据库、附件或备份。
+
+首次安装需从成功部署记录及备份确认上一成功版本，创建权限 700 的 `/var/lib/echo-feedback-image-retention`，将当前和上一成功镜像的完整镜像 ID 写入权限 600 的 `state.json`，格式为 `{"schema":1,"current":"sha256:当前镜像ID","rollback":"sha256:上一成功镜像ID"}`。不根据构建时间猜测成功版本，缺少可信状态时跳过清理。状态目录应保留，不随应用发布替换。
+
+安装后先预览，再启动清理和定时任务：
+
+```sh
+python -B /usr/local/sbin/echo-feedback-image-retention.py
+systemctl daemon-reload
+systemctl start echo-feedback-image-retention.service
+systemctl enable --now echo-feedback-image-retention.timer
+systemctl list-timers echo-feedback-image-retention.timer
+journalctl -u echo-feedback-image-retention.service -n 30 --no-pager
+```
+
+相同部署完成清理后重复执行会跳过，避免持续扫描。规则测试在仓库根目录执行 `python -B tests/deploy/imageRetentionTest.py`。本任务只清理 DC6 本地镜像，不删除 GHCR 的镜像版本。

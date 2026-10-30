@@ -1,6 +1,6 @@
 services:
   echo:
-    image: ${ECHO_IMAGE:?Set ECHO_IMAGE to an immutable SHA image}
+    image: ${ECHO_IMAGE:?Set ECHO_IMAGE to a versioned image}
     restart: unless-stopped
     init: true
     env_file: .env

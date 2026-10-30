@@ -3,7 +3,7 @@
 set -euo pipefail
 umask 077
 : "${SSH_HOST:?}" "${SSH_PORT:?}" "${SSH_USER:?}" "${SSH_PRIVATE_KEY:?}" "${SSH_KNOWN_HOSTS:?}"
-: "${DEPLOY_PATH:?}" "${COMPOSE_PROJECT_NAME:?}" "${GHCR_USER:?}" "${GHCR_TOKEN:?}" "${RELEASE_SHA:?}"
+: "${DEPLOY_PATH:?}" "${COMPOSE_PROJECT_NAME:?}" "${GHCR_USER:?}" "${GHCR_TOKEN:?}" "${RELEASE_SHA:?}" "${ECHO_VERSION:?}"
 [[ "$SSH_HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]]
 [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]] && ((10#$SSH_PORT > 0 && 10#$SSH_PORT <= 65535))
 [[ "$SSH_USER" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]*$ ]]
@@ -13,7 +13,8 @@ umask 077
 [[ "$COMPOSE_PROJECT_NAME" == echo-feedback ]]
 [[ "$GHCR_USER" =~ ^[A-Za-z0-9][A-Za-z0-9-]*$ ]]
 [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
-image="ghcr.io/fuego-zero/echo-feedback:sha-${RELEASE_SHA}"
+[[ "$ECHO_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+image="ghcr.io/fuego-zero/echo-feedback:${ECHO_VERSION}"
 local_tmp="$(mktemp -d)"
 remote_tmp=""
 remote="${SSH_USER}@${SSH_HOST}"

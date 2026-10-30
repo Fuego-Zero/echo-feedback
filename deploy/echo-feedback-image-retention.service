@@ -1,0 +1,15 @@
+[Unit]
+Description=Retain current and previous healthy Echo Feedback images
+After=docker.service
+ConditionPathExists=/var/run/docker.sock
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python -B /usr/local/sbin/echo-feedback-image-retention.py --apply
+TimeoutStartSec=180
+Nice=19
+IOSchedulingClass=idle
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
