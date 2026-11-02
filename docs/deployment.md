@@ -30,7 +30,7 @@ docker compose up -d --wait --wait-timeout 90
 
 Nginx 示例在 deploy/nginx.conf.example，替换域名、证书并执行 nginx -t。镜像包含服务端 TypeScript 和 tsx。生产输出在 apps/web/dist 和 packages/sdk/dist。
 
-GitHub Verify 验证 push 与 PR；Release image 在同仓库 PR 合入 main 后验证、发布 GHCR 版本镜像并通过 SSH 部署 DC6。详见下方自动发布配置。Compose 使用 --wait 等待就绪。
+GitHub Verify 验证 push 与 PR；Release image 在同仓库 PR 合入 main 后验证、发布 GHCR 版本镜像并通过 SSH 部署 DC6。服务版本递增时，镜像发布成功后调用 Release GitHub，自动创建标题与标签均为 `v<版本号>` 的发行版，例如 `v0.1.0`。详见下方自动发布配置。Compose 使用 --wait 等待就绪。
 
 ## 备份、升级、回滚
 
@@ -59,11 +59,12 @@ docker compose up -d --wait --wait-timeout 90
 1. 同仓库功能分支的 PR 合入 main（推荐 Merge commit 或 Squash and merge）触发 Release image。关闭但未合并、直接 push、fork PR 不触发部署。
 2. 检出准确的 merge_commit_sha，执行 pnpm verify，构建 linux/amd64 镜像。
 3. 对该镜像运行 tests/deploy/docker-smoke.mjs，验证启动、图片权限、重建以及数据库和附件备份恢复。通过后读取根目录 package.json 的 version，将同一镜像推送为 `ghcr.io/fuego-zero/echo-feedback:<版本号>`，不重新构建，不使用 SHA 标签。
+   镜像推送成功后，独立的 Release GitHub 任务比较合入前后的服务版本：未变时跳过 GitHub 发行；递增时将 `v<版本号>` 标签绑定到准确合并提交，并自动生成发行说明。标题仅显示版本号，例如 `v0.1.0`，正文注明镜像与独立 SDK 版本。发行任务使用内置 `GITHUB_TOKEN` 的 `contents: write`，构建和部署任务仍保留原有权限。
 4. SSH 连接 DC6，严格核对主机密钥。使用一次性 Docker 登录目录拉取镜像，并添加本地 `echo-feedback:<版本号>` 标签，不改变服务器其他项目的 GHCR 登录状态。
 5. 拉取和添加标签成功后停止回声写入，将整个 data 目录及旧 Compose、旧 .env 保存到 backups/release-时间-随机值；备份失败恢复旧服务，拉取或添加标签失败不停止服务。
 6. 更新回声专用 Compose 与 .env 中的 ECHO_IMAGE 为本地版本标签；使用 `--pull never` 从本地镜像启动，等待容器就绪，再检查公网 `/api/health/ready`。完整 GHCR 引用继续保存在部署记录和备份中。
 
-工作流串行执行且不取消正在部署的任务；部署前若发现 main 已更新，旧任务只保留版本镜像、不再部署。服务器还有 flock 部署锁。不克隆仓库、不修改岁时记、不自动覆盖 Nginx、不自动发布 npm SDK。
+镜像发布成功后，GitHub 发行与生产部署分别执行；存在 GitHub Release 表示该版本镜像已发布，不表示生产部署成功。镜像验收或推送失败时不会创建 GitHub Release。工作流串行执行且不取消正在部署的任务；部署前若发现 main 已更新，旧任务只保留版本镜像、不再部署。服务器还有 flock 部署锁。不克隆仓库、不修改岁时记、不自动覆盖 Nginx、不自动发布 npm SDK。
 
 ### GitHub Actions Secrets
 
@@ -96,7 +97,15 @@ Actions 构建推送使用内置 GITHUB_TOKEN 的 packages:write 权限；部署
 
 手动在 main 运行 Release image，image_sha 填目标版本对应的 40 位源码 SHA。工作流从该提交读取 package.json 的 version 和 Compose，仅部署对应已有版本镜像，不重新构建；SHA 用于定位源码，不作为镜像标签。仅当数据库兼容时直接这样回滚。若迁移不兼容，先停服务，将当前 data 留存，再从选定备份 data.tar.gz 恢复数据库及附件，恢复相应 .env/Compose 与权限，再启动旧镜像。旧流程发布的 SHA 镜像不适用新版自动回滚；需要使用相应备份的 .env/Compose 手动恢复。备份目录不自动清理，应制定保留周期。
 
-本流程不生成 GitHub Release 或 npm 包，不创建 latest 标签。服务镜像统一使用根目录 package.json 的版本号，发布前需确保版本号唯一；手动发布权限应限制在可信维护者范围内。
+### GitHub 发行与补录
+
+服务版本统一读取根目录 `package.json`，SDK 的 `packages/sdk/package.json` 版本独立管理。通过同仓库 PR 合入一个递增的服务版本，并等待 Release image 的镜像验收与推送成功，即可在 GitHub 侧栏看到 `v<版本号>`。普通提交、关闭但未合并的 PR、fork PR，以及服务版本未变的合并，都不会新增 GitHub 发行版；原有镜像发布与部署触发规则保持不变。
+
+发行通过 `.github/workflows/release-github.yml` 和 `scripts/githubRelease.sh` 完成。重复运行同一版本会核对标签指向并安全跳过；已有标签指向其他提交、版本倒退、API 权限错误等情况会失败，不会移动标签、覆盖已有发行说明或把异常当成“版本不存在”。补录较旧版本不会替换较新发行版的 Latest 标记。服务镜像仍不创建 `latest` 标签。
+
+历史镜像已发布但缺少 GitHub Release 时，可在 **main** 手动运行 **Release GitHub**，`source_sha` 填该已发布镜像对应的完整 40 位源码 SHA。此入口由 CI 创建发行版，不在本地执行 `gh release create`；它要求目标提交属于 main 历史且有成功的 Verify 记录，只补齐版本标签和发行说明，不构建或部署、不发布 npm。维护者须先确认该 SHA 的服务镜像已成功发布；Verify 通过本身不证明镜像已发布。
+
+手动运行 **Release image** 仍只部署已有镜像，不会顺带创建发行版。npm 包继续由 Release SDK 独立发行。手动运行权限应限制在可信维护者范围内。
 
 ## DC6 镜像自动保留
 
