@@ -75,6 +75,16 @@ jobs:
             .tmp/verification-results
             .tmp/playwright
           include-hidden-files: true
+  github-release:
+    needs: build
+    if: github.event.pull_request.merged == true && needs.build.result == 'success'
+    permissions:
+      contents: write
+      actions: read
+    uses: ./.github/workflows/release-github.yml
+    with:
+      source_sha: ${{ github.event.pull_request.merge_commit_sha }}
+      previous_sha: ${{ github.event.pull_request.base.sha }}
   deploy:
     needs: build
     permissions:

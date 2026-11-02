@@ -1,0 +1,46 @@
+name: Release GitHub
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        description: 已发布服务镜像对应的完整源码 SHA
+        required: true
+        type: string
+      previous_sha:
+        description: 合入前的 main 提交，用于检查服务版本是否递增
+        required: false
+        default: ""
+        type: string
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 补录已发布服务镜像的完整源码 SHA（仅 main，不构建或部署）
+        required: true
+        type: string
+concurrency:
+  group: echo-github-release
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  release:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.21.1
+      - name: 自动创建版本号发行版
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.source_sha }}
+          PREVIOUS_SHA: ${{ inputs.previous_sha }}
+        run: bash scripts/githubRelease.sh "$RELEASE_SHA" "$PREVIOUS_SHA"

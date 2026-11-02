@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="640" viewBox="0 0 1600 640" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">回声 Echo Feedback — 让每个声音，都有回响。</title>
+  <desc id="desc">宣纸色与朱砂色的项目封面，以对话回响标识和两张对话卡片表达用户反馈与产品改进。轻量、自部署、多项目反馈采集平台。</desc>
+  <defs>
+    <pattern id="paper" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="3" r=".7" fill="#B9A489" opacity=".15"/>
+      <circle cx="19" cy="24" r=".5" fill="#B9A489" opacity=".12"/>
+    </pattern>
+    <g id="echo-mark">
+      <path d="M4 59V23C4 12 13 3 24 3h19c6.1 0 11 4.9 11 11v3H29c-9.4 0-17 7.6-17 17s7.6 17 17 17h13v1c0 4.4-3.6 8-8 8H16l-8.9 5.6C5.7 66.5 4 65.5 4 64Z" transform="translate(0 -2)"/>
+      <path d="M47 21h-2c0 4.4-3.6 8-8 8h-6c-5 0-9 4-9 9s4 9 9 9h17v13l8-6.7c5.1-4.3 8-10.6 8-17.3v-1c0-7.7-7.6-14-17-14Z" transform="translate(-3 -1)"/>
+    </g>
+  </defs>
+  <path fill="#F4EBDD" d="M0 0h1600v640H0z"/>
+  <path fill="url(#paper)" d="M0 0h1600v640H0z"/>
+  <path fill="#A64232" d="M0 0h8v640H0z"/>
+  <g font-family="'Microsoft YaHei', 'PingFang SC', sans-serif">
+    <use href="#echo-mark" transform="translate(92 68) scale(.75)" fill="#A64232"/>
+    <text x="164" y="91" fill="#302B26" font-size="24" letter-spacing="4">回声</text>
+    <text x="164" y="116" fill="#766552" font-size="12" letter-spacing="3">ECHO FEEDBACK</text>
+    <g font-family="'Songti SC', SimSun, serif" font-size="82" fill="#302B26" letter-spacing="4">
+      <text x="90" y="262">让每个声音，</text>
+      <text x="90" y="370">都有<tspan fill="#A64232">回响。</tspan></text>
+    </g>
+    <text x="96" y="433" fill="#766552" font-size="23" letter-spacing="1">轻量、自部署的多项目反馈采集平台</text>
+    <g font-size="15" fill="#675747">
+      <rect x="96" y="473" width="122" height="36" rx="18" fill="#EADCCA"/>
+      <text x="157" y="497" text-anchor="middle">匿名反馈</text>
+      <rect x="230" y="473" width="132" height="36" rx="18" fill="#EADCCA"/>
+      <text x="296" y="497" text-anchor="middle">七种表单风格</text>
+      <rect x="374" y="473" width="140" height="36" rx="18" fill="#EADCCA"/>
+      <text x="444" y="497" text-anchor="middle">数据自主保存</text>
+    </g>
+    <g stroke="#D8C8AF">
+      <circle cx="1224" cy="315" r="238"/>
+      <circle cx="1224" cy="315" r="174"/>
+      <circle cx="1224" cy="315" r="110"/>
+    </g>
+    <path d="M937 177c58-80 151-128 252-134M1306 561c79-18 149-71 188-140" stroke="#A64232" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+    <circle cx="1190" cy="43" r="4" fill="#A64232"/>
+    <circle cx="1494" cy="421" r="4" fill="#A64232"/>
+    <use href="#echo-mark" transform="translate(1150 233) scale(2.45)" fill="#A64232"/>
+    <rect x="925" y="130" width="368" height="100" rx="8" fill="#FBF7EF" stroke="#D8C8AF"/>
+    <circle cx="958" cy="160" r="4" fill="#A64232"/>
+    <text x="975" y="165" fill="#A64232" font-size="12" letter-spacing="2">一纸心声</text>
+    <text x="953" y="201" fill="#302B26" font-size="23">希望增加一个快捷入口。</text>
+    <rect x="1191" y="400" width="322" height="100" rx="8" fill="#FBF7EF" stroke="#D8C8AF"/>
+    <circle cx="1224" cy="431" r="4" fill="#52796A"/>
+    <text x="1241" y="436" fill="#52796A" font-size="12" letter-spacing="2">皆有回响</text>
+    <text x="1219" y="471" fill="#302B26" font-size="22">收到，记下这次改进。</text>
+    <text x="1480" y="83" fill="#A64232" font-size="12" letter-spacing="3" text-anchor="end">LISTEN. IMPROVE.</text>
+    <path d="M96 563h1408" stroke="#D8C8AF"/>
+    <text x="96" y="600" fill="#766552" font-size="12" letter-spacing="2">SELF-HOSTED / MULTI-PROJECT / FRAMEWORK-AGNOSTIC</text>
+    <text x="1504" y="600" fill="#766552" font-size="12" letter-spacing="2" text-anchor="end">回声 / ECHO</text>
+  </g>
+</svg>
